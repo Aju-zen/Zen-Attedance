@@ -15,8 +15,8 @@ interface AppContextType {
   setNotifications: React.Dispatch<React.SetStateAction<AppNotification[]>>;
   setActivePage: (page: string, clientId?: string | null) => void;
   setSelectedDate: (date: string) => void;
-  setTheme: (theme: 'light' | 'dark') => void;
-  updateSettings: (settings: GymSettings) => void;
+  setTheme: (theme: 'light' | 'dark') => Promise<void>;
+  updateSettings: (settings: GymSettings) => Promise<void>;
   addNotification: (type: AppNotification['type'], message: string) => void;
   clearNotification: (id: string) => void;
   refreshClients: () => Promise<void>;
@@ -47,6 +47,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = getSavedSettings();
     setSettings(saved);
     applyTheme(saved.theme);
+
+    // Fetch from Supabase if configured
+    if (saved.useSupabase || import.meta.env.VITE_SUPABASE_URL) {
+      db.getGlobalSettings().then(globalSettings => {
+        if (globalSettings) {
+          const merged = { ...saved, ...globalSettings };
+          setSettings(merged);
+          saveSavedSettings(merged);
+          applyTheme(merged.theme);
+        }
+      });
+    }
   }, []);
 
   // Sync data when settings/db configuration changes
@@ -88,17 +100,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSelectedClientId(clientId);
   };
 
-  const setTheme = (theme: 'light' | 'dark') => {
+  const setTheme = async (theme: 'light' | 'dark') => {
     const updated = { ...settings, theme };
     setSettings(updated);
     saveSavedSettings(updated);
     applyTheme(theme);
+    if (updated.useSupabase || import.meta.env.VITE_SUPABASE_URL) {
+      await db.updateGlobalSettings(updated);
+    }
   };
 
-  const updateSettings = (updated: GymSettings) => {
+  const updateSettings = async (updated: GymSettings) => {
     setSettings(updated);
     saveSavedSettings(updated);
     applyTheme(updated.theme);
+    if (updated.useSupabase || import.meta.env.VITE_SUPABASE_URL) {
+      await db.updateGlobalSettings(updated);
+    }
     addNotification('success', 'Settings updated successfully');
   };
 

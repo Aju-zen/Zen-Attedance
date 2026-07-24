@@ -340,5 +340,60 @@ export const supabaseDb: GymDB = {
       .eq('date', todayStr);
 
     if (err2) console.error('Error clearing attendance:', err2);
+  },
+
+  async getGlobalSettings(): Promise<Partial<GymSettings> | null> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('gym_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (error || !data) return null;
+
+      return {
+        gymName: data.gym_name,
+        logoUrl: data.logo_url,
+        theme: data.theme,
+        gymLocationLat: data.gym_location_lat,
+        gymLocationLng: data.gym_location_lng,
+        gymLocationRadius: data.gym_location_radius
+      };
+    } catch (e) {
+      return null;
+    }
+  },
+
+  async updateGlobalSettings(settings: Partial<GymSettings>): Promise<boolean> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    try {
+      const { error } = await supabase
+        .from('gym_settings')
+        .upsert({
+          id: 1,
+          gym_name: settings.gymName,
+          logo_url: settings.logoUrl,
+          theme: settings.theme,
+          gym_location_lat: settings.gymLocationLat,
+          gym_location_lng: settings.gymLocationLng,
+          gym_location_radius: settings.gymLocationRadius,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+
+      if (error) {
+        console.error('Error updating settings in Supabase:', error);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error('Exception updating settings in Supabase:', e);
+      return false;
+    }
   }
 };

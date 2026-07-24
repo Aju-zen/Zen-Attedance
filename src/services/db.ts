@@ -37,6 +37,10 @@ export interface GymDB {
 
   // For Testing Only
   clearTestDeviceHistory(deviceFingerprint: string): Promise<void>;
+
+  // Global Settings
+  getGlobalSettings(): Promise<Partial<GymSettings> | null>;
+  updateGlobalSettings(settings: Partial<GymSettings>): Promise<boolean>;
 }
 
 // Settings helper
@@ -156,5 +160,21 @@ export const db: GymDB = {
     }
     return localStorageDb.clearTestDeviceHistory(deviceFingerprint);
   },
+
+  async getGlobalSettings() {
+    const settings = getSavedSettings();
+    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+      return supabaseDb.getGlobalSettings();
+    }
+    return null;
+  },
+
+  async updateGlobalSettings(newSettings) {
+    const settings = getSavedSettings();
+    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+      return supabaseDb.updateGlobalSettings(newSettings);
+    }
+    return false;
+  }
 };
 
