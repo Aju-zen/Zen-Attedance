@@ -12,14 +12,24 @@ export const CheckInPage: React.FC = () => {
   const [failCount, setFailCount] = useState(0);
 
   const [gymSettings, setGymSettings] = useState<GymSettings>(defaultSettings);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   
   useEffect(() => {
     db.getGlobalSettings().then(settings => {
       if (settings) {
         setGymSettings(prev => ({ ...prev, ...settings }));
       }
+      setIsLoadingSettings(false);
     });
   }, []);
+
+  if (isLoadingSettings) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   const requestLocation = useCallback((isRetry = false) => {
     setStep('verifying');

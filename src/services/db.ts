@@ -45,8 +45,8 @@ export interface GymDB {
 export const db: GymDB = supabaseDb;
 
 export const defaultSettings: GymSettings = {
-  gymName: 'Iron Temple Gym',
-  logoUrl: 'Dumbbell', // lucide icon name
+  gymName: '',
+  logoUrl: '', // blank by default
   theme: 'dark',
   supabaseUrl: '',
   supabaseAnonKey: '',

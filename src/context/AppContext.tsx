@@ -11,6 +11,7 @@ interface AppContextType {
   selectedClientId: string | null;
   selectedDate: string;
   settings: GymSettings;
+  settingsLoaded: boolean;
   notifications: AppNotification[];
   setNotifications: React.Dispatch<React.SetStateAction<AppNotification[]>>;
   setActivePage: (page: string, clientId?: string | null) => void;
@@ -39,6 +40,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [settings, setSettings] = useState<GymSettings>(defaultSettings);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const notifiedExpirations = useRef<Set<string>>(new Set());
 
@@ -55,6 +57,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSettings(merged);
         applyTheme(merged.theme);
       }
+      setSettingsLoaded(true);
     });
   }, []);
 
@@ -341,6 +344,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         selectedClientId,
         selectedDate,
         settings,
+        settingsLoaded,
         notifications,
         setNotifications,
         setActivePage,

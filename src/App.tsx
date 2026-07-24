@@ -11,7 +11,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 const AppContent: React.FC = () => {
-  const { activePage } = useApp();
+  const { activePage, settingsLoaded } = useApp();
 
   const renderPage = () => {
     switch (activePage) {
@@ -36,11 +36,19 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-250">
-      <Sidebar />
-      <main className="flex-1 w-full overflow-y-auto pb-20 md:pb-0">
-        {renderPage()}
-      </main>
-      <NotificationToast />
+      {settingsLoaded ? (
+        <>
+          <Sidebar />
+          <main className="flex-1 w-full overflow-y-auto pb-20 md:pb-0">
+            {renderPage()}
+          </main>
+          <NotificationToast />
+        </>
+      ) : (
+        <div className="flex-1 flex items-center justify-center min-h-screen">
+          <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
     </div>
   );
 };
