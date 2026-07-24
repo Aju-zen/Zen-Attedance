@@ -14,7 +14,7 @@ export const AttendancePage: React.FC = () => {
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'self_check_in'>('all');
   const [rangeAttendance, setRangeAttendance] = useState<Attendance[]>([]);
   const [loadingRange, setLoadingRange] = useState(false);
 
@@ -55,8 +55,12 @@ export const AttendancePage: React.FC = () => {
   };
 
   // 3. Find attendance status for a client on a specific date
+  const getAttendanceRecord = (clientId: string, dateStr: string) => {
+    return rangeAttendance.find(a => a.client_id === clientId && a.date === dateStr);
+  };
+
   const getStatus = (clientId: string, dateStr: string): 'Present' | 'Absent' | null => {
-    const record = rangeAttendance.find(a => a.client_id === clientId && a.date === dateStr);
+    const record = getAttendanceRecord(clientId, dateStr);
     return record ? record.status : null;
   };
 
@@ -76,10 +80,16 @@ export const AttendancePage: React.FC = () => {
         client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.phone.includes(searchQuery);
 
-      const matchesFilter =
-        statusFilter === 'all' ||
-        (statusFilter === 'active' && client.status === 'Active') ||
-        (statusFilter === 'expired' && client.status === 'Expired');
+      const matchesFilter = (() => {
+        if (statusFilter === 'all') return true;
+        if (statusFilter === 'active') return client.status === 'Active';
+        if (statusFilter === 'expired') return client.status === 'Expired';
+        if (statusFilter === 'self_check_in') {
+          const record = getAttendanceRecord(client.id, d0);
+          return !!(record && record.status === 'Present' && record.device_fingerprint);
+        }
+        return true;
+      })();
 
       return matchesSearch && matchesFilter;
     })
@@ -160,15 +170,17 @@ export const AttendancePage: React.FC = () => {
           >
             Expired
           </button>
-          <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
-          <a
-            href="/checkin"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-xl px-4 py-3 text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+          <button
+            onClick={() => setStatusFilter('self_check_in')}
+            className={`rounded-xl px-4 py-3 text-xs font-bold transition flex items-center gap-1.5 shadow-sm
+              ${
+                statusFilter === 'self_check_in'
+                  ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                  : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
+              }`}
           >
-            Self Check-in Link
-          </a>
+            Self Check-in
+          </button>
         </div>
       </div>
 

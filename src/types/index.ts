@@ -16,6 +16,7 @@ export interface Attendance {
   date: string;            // YYYY-MM-DD
   status: 'Present' | 'Absent';
   marked_at: string;       // ISO timestamp
+  device_fingerprint?: string; // Present if marked via self check-in
 }
 
 export interface MembershipHistory {

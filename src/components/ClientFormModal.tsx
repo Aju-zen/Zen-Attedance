@@ -82,7 +82,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
       />
 
       {/* Modal Content */}
-      <div className="relative z-10 w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl transition-all dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+      <div className="relative z-10 w-full max-w-lg transform overflow-visible rounded-2xl bg-white p-6 shadow-2xl transition-all dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800">
           <h2 className="text-xl font-bold text-zinc-800 dark:text-white">

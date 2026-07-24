@@ -23,13 +23,7 @@ export const CheckInPage: React.FC = () => {
     });
   }, []);
 
-  if (isLoadingSettings) {
-    return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  // Loading state moved below hooks
 
   const requestLocation = useCallback((isRetry = false) => {
     setStep('verifying');
@@ -87,6 +81,14 @@ export const CheckInPage: React.FC = () => {
     // Automatically ask for location on mount (not a retry)
     requestLocation(false);
   }, [requestLocation]);
+
+  if (isLoadingSettings) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   const getDeviceFingerprint = () => {
     let fp = localStorage.getItem('device_fingerprint');
