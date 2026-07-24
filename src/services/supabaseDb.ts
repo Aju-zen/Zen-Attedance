@@ -345,7 +345,12 @@ export const supabaseDb: GymDB = {
         .eq('id', 1)
         .single();
 
-      if (error || !data) return null;
+      if (error) {
+        console.error('Error fetching global settings from Supabase:', error.message);
+        return null;
+      }
+      
+      if (!data) return null;
 
       return {
         gymName: data.gym_name,
@@ -355,7 +360,8 @@ export const supabaseDb: GymDB = {
         gymLocationLng: data.gym_location_lng,
         gymLocationRadius: data.gym_location_radius
       };
-    } catch (e) {
+    } catch (e: any) {
+      console.error('Exception fetching global settings:', e.message);
       return null;
     }
   },
@@ -379,12 +385,12 @@ export const supabaseDb: GymDB = {
         }, { onConflict: 'id' });
 
       if (error) {
-        console.error('Error updating settings in Supabase:', error);
+        console.error('Error updating global settings to Supabase:', error.message);
         return false;
       }
       return true;
-    } catch (e) {
-      console.error('Exception updating settings in Supabase:', e);
+    } catch (e: any) {
+      console.error('Exception updating global settings:', e.message);
       return false;
     }
   }

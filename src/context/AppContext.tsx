@@ -99,16 +99,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setTheme = async (theme: 'light' | 'dark') => {
     const updated = { ...settings, theme };
-    setSettings(updated);
-    applyTheme(theme);
-    await db.updateGlobalSettings(updated);
+    const success = await db.updateGlobalSettings(updated);
+    if (success) {
+      setSettings(updated);
+      applyTheme(theme);
+    } else {
+      addNotification('error', 'Failed to save theme to database. Check console.');
+    }
   };
 
   const updateSettings = async (updated: GymSettings) => {
-    setSettings(updated);
-    applyTheme(updated.theme);
-    await db.updateGlobalSettings(updated);
-    addNotification('success', 'Settings updated successfully');
+    const success = await db.updateGlobalSettings(updated);
+    if (success) {
+      setSettings(updated);
+      applyTheme(updated.theme);
+      addNotification('success', 'Settings updated successfully');
+    } else {
+      addNotification('error', 'Failed to save settings to database. Did you run the SQL?');
+    }
   };
 
   const refreshClients = async () => {
