@@ -55,8 +55,13 @@ export const SettingsPage: React.FC = () => {
     <div className="space-y-6 max-w-4xl mx-auto px-4 md:px-6 py-6">
       {/* Title */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-800 dark:text-white tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-800 dark:text-white tracking-tight flex items-center gap-3">
           System Settings
+          {import.meta.env.VITE_SUPABASE_URL ? (
+            <span className="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-full border border-emerald-500/20 font-bold">Cloud Connected</span>
+          ) : (
+            <span className="text-xs bg-red-500/10 text-red-500 px-2 py-1 rounded-full border border-red-500/20 font-bold">Cloud Disconnected (Missing VITE_ Keys)</span>
+          )}
         </h1>
         <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
           Customize configuration profiles, active databases, and system backups.
