@@ -10,7 +10,7 @@ export const CheckInPage: React.FC = () => {
   const [successDetails, setSuccessDetails] = useState<any>(null);
   const [failCount, setFailCount] = useState(0);
 
-  const requestLocation = useCallback(() => {
+  const requestLocation = useCallback((isRetry = false) => {
     setStep('verifying');
     setErrorMessage('');
 
@@ -19,6 +19,8 @@ export const CheckInPage: React.FC = () => {
       setStep('error');
       return;
     }
+
+    const startTime = Date.now();
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -30,16 +32,27 @@ export const CheckInPage: React.FC = () => {
       },
       (error) => {
         console.error('Geolocation error:', error);
+        
+        let msg = 'An unknown error occurred while verifying location.';
         if (error.code === 1) {
-          setErrorMessage('Location permission is required to mark attendance. Please allow it and refresh the page.');
+          msg = 'Location permission is required to mark attendance. Please allow it and refresh the page.';
         } else if (error.code === 3) {
-          setErrorMessage('Location request timed out. Please ensure your GPS is on and try again.');
+          msg = 'Location request timed out. Please ensure your GPS is on and try again.';
         } else if (error.code === 2) {
-          setErrorMessage('Location information is unavailable. Please check your GPS connection.');
-        } else {
-          setErrorMessage('An unknown error occurred while verifying location.');
+          msg = 'Location information is unavailable. Please check your GPS connection.';
         }
-        setStep('error');
+
+        if (isRetry) {
+          const elapsedTime = Date.now() - startTime;
+          const waitTime = Math.max(0, 15000 - elapsedTime);
+          setTimeout(() => {
+            setErrorMessage(msg);
+            setStep('error');
+          }, waitTime);
+        } else {
+          setErrorMessage(msg);
+          setStep('error');
+        }
       },
       {
         enableHighAccuracy: true,
@@ -50,8 +63,8 @@ export const CheckInPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Automatically ask for location on mount
-    requestLocation();
+    // Automatically ask for location on mount (not a retry)
+    requestLocation(false);
   }, [requestLocation]);
 
   const getDeviceFingerprint = () => {
@@ -200,7 +213,7 @@ export const CheckInPage: React.FC = () => {
               onClick={() => {
                 setMembershipNumber('');
                 if (errorMessage.includes('Location permission')) {
-                  requestLocation();
+                  requestLocation(true);
                 } else {
                   setStep('input');
                 }
