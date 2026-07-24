@@ -111,13 +111,43 @@ export const SettingsPage: React.FC = () => {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        if (file.size > 2 * 1024 * 1024) {
-                          alert('Please select an image smaller than 2MB');
-                          return;
-                        }
                         const reader = new FileReader();
                         reader.onload = (evt) => {
-                          setLogoUrl(evt.target?.result as string);
+                          const img = new Image();
+                          img.onload = () => {
+                            // Resize image using canvas to ensure payload is tiny (prevents Supabase 413 Payload Too Large)
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 256;
+                            const MAX_HEIGHT = 256;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > height) {
+                              if (width > MAX_WIDTH) {
+                                height = Math.round((height * MAX_WIDTH) / width);
+                                width = MAX_WIDTH;
+                              }
+                            } else {
+                              if (height > MAX_HEIGHT) {
+                                width = Math.round((width * MAX_HEIGHT) / height);
+                                height = MAX_HEIGHT;
+                              }
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                              ctx.drawImage(img, 0, 0, width, height);
+                              // Compress to webp or jpeg
+                              const compressedBase64 = canvas.toDataURL('image/webp', 0.8);
+                              setLogoUrl(compressedBase64);
+                            } else {
+                              // Fallback if canvas fails for some reason
+                              setLogoUrl(evt.target?.result as string);
+                            }
+                          };
+                          img.src = evt.target?.result as string;
                         };
                         reader.readAsDataURL(file);
                       }
