@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Settings, Save, ShieldCheck, Lock, Unlock, Play } from 'lucide-react';
+import { Settings, Save, MapPin, ShieldCheck, Lock, Unlock, Play } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const {
@@ -279,6 +279,31 @@ export const SettingsPage: React.FC = () => {
                     />
                   </div>
                 </div>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          setGymLat(position.coords.latitude.toString());
+                          setGymLng(position.coords.longitude.toString());
+                          addNotification('success', 'Location updated to your current position.');
+                        },
+                        (err) => {
+                          addNotification('error', 'Could not get location. Ensure GPS is enabled.');
+                        },
+                        { enableHighAccuracy: true }
+                      );
+                    } else {
+                      addNotification('error', 'Geolocation not supported by this browser.');
+                    }
+                  }}
+                  className="rounded-lg bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400 transition mt-2 flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Set to My Current Location
+                </button>
                 
                 {/* Seed button */}
                 <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-emerald-500/20">
