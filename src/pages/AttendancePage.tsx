@@ -160,6 +160,15 @@ export const AttendancePage: React.FC = () => {
           >
             Expired
           </button>
+          <div className="w-px h-6 bg-zinc-200 dark:bg-zinc-800 mx-1"></div>
+          <a
+            href="/checkin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-xl px-4 py-3 text-xs font-bold transition flex items-center gap-1.5 shadow-sm bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+          >
+            Self Check-in Link
+          </a>
         </div>
       </div>
 

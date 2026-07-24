@@ -71,11 +71,16 @@ export const saveSavedSettings = (settings: GymSettings) => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
+const isSupabaseConfigured = (settings: GymSettings) => {
+  return (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) || 
+         (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey);
+};
+
 // Dispatcher that delegates database operations based on configuration settings
 export const db: GymDB = {
   async getClients() {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.getClients();
     }
     return localStorageDb.getClients();
@@ -83,7 +88,7 @@ export const db: GymDB = {
 
   async addClient(client) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.addClient(client);
     }
     return localStorageDb.addClient(client);
@@ -91,7 +96,7 @@ export const db: GymDB = {
 
   async updateClient(id, client) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.updateClient(id, client);
     }
     return localStorageDb.updateClient(id, client);
@@ -99,7 +104,7 @@ export const db: GymDB = {
 
   async deleteClient(id) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.deleteClient(id);
     }
     return localStorageDb.deleteClient(id);
@@ -107,7 +112,7 @@ export const db: GymDB = {
 
   async getAttendance(date) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.getAttendance(date);
     }
     return localStorageDb.getAttendance(date);
@@ -115,7 +120,7 @@ export const db: GymDB = {
 
   async getAttendanceRange(startDate, endDate) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.getAttendanceRange(startDate, endDate);
     }
     return localStorageDb.getAttendanceRange(startDate, endDate);
@@ -123,7 +128,7 @@ export const db: GymDB = {
 
   async markAttendance(clientId, date, status) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.markAttendance(clientId, date, status);
     }
     return localStorageDb.markAttendance(clientId, date, status);
@@ -131,7 +136,7 @@ export const db: GymDB = {
 
   async getMembershipHistory(clientId) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.getMembershipHistory(clientId);
     }
     return localStorageDb.getMembershipHistory(clientId);
@@ -139,7 +144,7 @@ export const db: GymDB = {
 
   async addMembershipHistory(history) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.addMembershipHistory(history);
     }
     return localStorageDb.addMembershipHistory(history);
@@ -147,7 +152,7 @@ export const db: GymDB = {
 
   async processSelfCheckIn(params) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.processSelfCheckIn(params);
     }
     return localStorageDb.processSelfCheckIn(params);
@@ -155,7 +160,7 @@ export const db: GymDB = {
 
   async clearTestDeviceHistory(deviceFingerprint) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.clearTestDeviceHistory(deviceFingerprint);
     }
     return localStorageDb.clearTestDeviceHistory(deviceFingerprint);
@@ -163,7 +168,7 @@ export const db: GymDB = {
 
   async getGlobalSettings() {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.getGlobalSettings();
     }
     return null;
@@ -171,7 +176,7 @@ export const db: GymDB = {
 
   async updateGlobalSettings(newSettings) {
     const settings = getSavedSettings();
-    if (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey) {
+    if (isSupabaseConfigured(settings)) {
       return supabaseDb.updateGlobalSettings(newSettings);
     }
     return false;

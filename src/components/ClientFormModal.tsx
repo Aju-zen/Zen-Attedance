@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { X } from 'lucide-react';
+import { CustomDatePicker } from './CustomDatePicker';
 
 interface ClientFormModalProps {
   isOpen: boolean;
@@ -143,22 +144,18 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
               <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                 Membership Start Date
               </label>
-              <input
-                type="date"
+              <CustomDatePicker
                 value={membershipStart}
-                onChange={e => setMembershipStart(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition duration-150 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:focus:border-emerald-500 dark:color-scheme-dark"
+                onChange={setMembershipStart}
               />
             </div>
             <div>
               <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                 Membership End Date
               </label>
-              <input
-                type="date"
+              <CustomDatePicker
                 value={membershipEnd}
-                onChange={e => setMembershipEnd(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition duration-150 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:focus:border-emerald-500 dark:color-scheme-dark"
+                onChange={setMembershipEnd}
               />
             </div>
           </div>
