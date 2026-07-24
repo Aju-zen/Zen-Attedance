@@ -22,7 +22,7 @@ interface AppContextType {
   refreshClients: () => Promise<void>;
   loadAttendance: (date: string) => Promise<void>;
   markAttendance: (clientId: string, date: string, status: 'Present' | 'Absent') => Promise<void>;
-  addNewClient: (client: { name: string; phone: string; membership_start: string; membership_end: string; notes: string }) => Promise<void>;
+  addNewClient: (client: { membership_number: string; name: string; phone: string; membership_start: string; membership_end: string; notes: string }) => Promise<void>;
   editClient: (id: string, fields: Partial<Client>) => Promise<void>;
   removeClient: (id: string) => Promise<void>;
   testConnection: (url: string, key: string) => Promise<boolean>;
@@ -172,7 +172,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addNewClient = async (clientData: { name: string; phone: string; membership_start: string; membership_end: string; notes: string }) => {
+  const addNewClient = async (clientData: { membership_number: string; name: string; phone: string; membership_start: string; membership_end: string; notes: string }) => {
     try {
       const newClient = await db.addClient(clientData);
       setClients(prev => [...prev, newClient].sort((a, b) => a.name.localeCompare(b.name)));
