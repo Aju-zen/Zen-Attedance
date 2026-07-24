@@ -1,4 +1,4 @@
-import { Client, Attendance, MembershipHistory } from '../types';
+import { Client, Attendance, MembershipHistory, GymSettings } from '../types';
 import { GymDB, getSavedSettings } from './db';
 
 const CLIENTS_KEY = 'gym_clients_100';
@@ -398,6 +398,14 @@ export const localStorageDb: GymDB = {
       atts = atts.filter((a: any) => a.date !== todayStr);
       localStorage.setItem(ATTENDANCE_KEY, JSON.stringify(atts));
     }
+  },
+
+  async getGlobalSettings(): Promise<Partial<GymSettings> | null> {
+    return null;
+  },
+
+  async updateGlobalSettings(settings: Partial<GymSettings>): Promise<boolean> {
+    return false;
   }
 };
 

@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Client, Attendance, MembershipHistory } from '../types';
+import { Client, Attendance, MembershipHistory, GymSettings } from '../types';
 import { GymDB, getSavedSettings } from './db';
 
 let cachedClient: SupabaseClient | null = null;
