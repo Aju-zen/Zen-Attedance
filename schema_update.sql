@@ -70,7 +70,7 @@ DECLARE
     v_device_used_for TEXT;
 BEGIN
     -- 1. Check Gym Location Settings
-    SELECT gym_latitude, gym_longitude, allowed_radius_meters 
+    SELECT gym_location_lat, gym_location_lng, gym_location_radius 
     INTO v_gym_lat, v_gym_lon, v_radius
     FROM gym_settings WHERE id = 1;
 
@@ -111,7 +111,7 @@ BEGIN
     -- 4. Check Duplicate Attendance
     SELECT id INTO v_existing_checkin
     FROM attendance
-    WHERE client_id = v_client_id AND date = CURRENT_DATE;
+    WHERE client_id = v_client_id AND date = CURRENT_DATE AND status = 'Present';
 
     IF v_existing_checkin IS NOT NULL THEN
         RETURN json_build_object('success', false, 'error', 'Attendance already marked today.');
@@ -128,7 +128,14 @@ BEGIN
         client_id, date, status, latitude, longitude, device_fingerprint
     ) VALUES (
         v_client_id, CURRENT_DATE, 'Present', p_latitude, p_longitude, p_device_fingerprint
-    );
+    )
+    ON CONFLICT (client_id, date)
+    DO UPDATE SET 
+        status = 'Present',
+        latitude = p_latitude,
+        longitude = p_longitude,
+        device_fingerprint = p_device_fingerprint,
+        marked_at = NOW();
 
     RETURN json_build_object(
         'success', true, 

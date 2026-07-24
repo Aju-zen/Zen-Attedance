@@ -87,6 +87,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ value, onCha
   return (
     <div className="relative" ref={containerRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2.5 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm hover:border-emerald-500/50 transition-colors"
       >
@@ -99,13 +100,13 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ value, onCha
       {isOpen && (
         <div className="absolute top-full left-0 md:right-0 md:left-auto mt-2 z-50 w-72 rounded-2xl border border-zinc-200 bg-white p-4 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center justify-between mb-4">
-            <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-colors">
+            <button type="button" onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-colors">
               <ChevronLeft className="h-5 w-5" />
             </button>
             <h3 className="text-sm font-bold text-zinc-800 dark:text-white">
               {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h3>
-            <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-colors">
+            <button type="button" onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-colors">
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
@@ -128,6 +129,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ value, onCha
               return (
                 <button
                   key={d}
+                  type="button"
                   onClick={() => handleSelectDate(d)}
                   className={`h-8 w-8 rounded-full text-sm font-medium transition-colors flex items-center justify-center
                     ${isSelected 
@@ -145,6 +147,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ value, onCha
           </div>
           <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-center">
              <button
+                type="button"
                 onClick={() => {
                    onChange(todayStr);
                    setIsOpen(false);
