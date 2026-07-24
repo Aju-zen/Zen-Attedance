@@ -1,31 +1,26 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Settings, Save, Database, Download, Upload, ShieldCheck, Play, Lock, Unlock } from 'lucide-react';
+import { Settings, Save, ShieldCheck, Lock, Unlock, Play } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const {
     settings,
     updateSettings,
-    testConnection,
-    seedSupabase,
     addNotification,
+    seedSupabase,
     refreshClients,
   } = useApp();
 
-  const [gymName, setGymName] = useState(settings.gymName);
-  const [logoUrl, setLogoUrl] = useState(settings.logoUrl);
-  const [theme, setThemeState] = useState(settings.theme);
-  const [supabaseUrl, setSupabaseUrl] = useState(settings.supabaseUrl);
-  const [supabaseAnonKey, setSupabaseAnonKey] = useState(settings.supabaseAnonKey);
-  const [useSupabase, setUseSupabase] = useState(settings.useSupabase);
-  const [isTesting, setIsTesting] = useState(false);
-  const [isSeeding, setIsSeeding] = useState(false);
+  const [gymName, setGymName] = useState(settings.gymName || '');
+  const [logoUrl, setLogoUrl] = useState(settings.logoUrl || '');
+  const [theme, setThemeState] = useState(settings.theme || 'dark');
   const [gymLat, setGymLat] = useState(settings.gymLocationLat?.toString() || '');
   const [gymLng, setGymLng] = useState(settings.gymLocationLng?.toString() || '');
   const [gymRadius, setGymRadius] = useState(settings.gymLocationRadius?.toString() || '50');
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // 1. Save general settings
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -35,32 +30,13 @@ export const SettingsPage: React.FC = () => {
       gymName: gymName.trim(),
       logoUrl: logoUrl,
       theme,
-      supabaseUrl: supabaseUrl.trim(),
-      supabaseAnonKey: supabaseAnonKey.trim(),
-      useSupabase,
       gymLocationLat: gymLat ? parseFloat(gymLat) : undefined,
       gymLocationLng: gymLng ? parseFloat(gymLng) : undefined,
       gymLocationRadius: gymRadius ? parseFloat(gymRadius) : 50,
     });
   };
 
-  // 2. Test Supabase credentials
-  const handleTestConnection = async () => {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      addNotification('error', 'Please fill in both Supabase URL and Anon Key first.');
-      return;
-    }
-
-    setIsTesting(true);
-    const success = await testConnection(supabaseUrl.trim(), supabaseAnonKey.trim());
-    setIsTesting(false);
-
-    if (success) {
-      addNotification('success', 'Supabase connection verified successfully!');
-    }
-  };
-
-  // 3. Seed Supabase database
+  // 2. Seed Supabase database
   const handleSeedSupabase = async () => {
     if (!window.confirm('This will seed mock data to your live Supabase database. Are you sure you want to proceed?')) {
       return;
@@ -73,70 +49,6 @@ export const SettingsPage: React.FC = () => {
     if (success) {
       refreshClients();
     }
-  };
-
-  // 4. Backup local database state
-  const handleBackup = () => {
-    const clientsStr = localStorage.getItem('gym_clients') || '[]';
-    const attendanceStr = localStorage.getItem('gym_attendance') || '[]';
-    const historyStr = localStorage.getItem('gym_membership_history') || '[]';
-    const configStr = localStorage.getItem('gym_tracker_settings') || '{}';
-
-    const backupObj = {
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-      data: {
-        clients: JSON.parse(clientsStr),
-        attendance: JSON.parse(attendanceStr),
-        history: JSON.parse(historyStr),
-        settings: JSON.parse(configStr),
-      },
-    };
-
-    const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${gymName.replace(/\s+/g, '_')}_Backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    addNotification('success', 'Database backup downloaded successfully!');
-  };
-
-  // 5. Restore database state from file
-  const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!window.confirm('Warning: Restoring will overwrite all current offline client logs and membership databases. Do you want to continue?')) {
-      e.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const backup = JSON.parse(evt.target?.result as string);
-        if (backup && backup.data && backup.data.clients && backup.data.attendance && backup.data.history) {
-          localStorage.setItem('gym_clients', JSON.stringify(backup.data.clients));
-          localStorage.setItem('gym_attendance', JSON.stringify(backup.data.attendance));
-          localStorage.setItem('gym_membership_history', JSON.stringify(backup.data.history));
-          if (backup.data.settings) {
-            localStorage.setItem('gym_tracker_settings', JSON.stringify(backup.data.settings));
-          }
-          addNotification('success', 'Database successfully restored! Reloading page...');
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
-        } else {
-          addNotification('error', 'Restore failed: Invalid backup file format.');
-        }
-      } catch (err) {
-        addNotification('error', 'Restore failed: Error parsing JSON file.');
-      }
-    };
-    reader.readAsText(file);
   };
 
   return (
@@ -239,7 +151,7 @@ export const SettingsPage: React.FC = () => {
               </div>
               <h2 className="text-lg font-bold text-zinc-800 dark:text-white">Admin Settings Locked</h2>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                Enter the admin password to manage Gym Location and Database Settings.
+                Enter the admin password to manage Gym Location.
               </p>
               <div className="flex w-full max-w-xs items-center gap-2">
                 <input
@@ -332,79 +244,19 @@ export const SettingsPage: React.FC = () => {
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Database Setup (Admin) */}
-              <div className="rounded-2xl border border-emerald-500/30 bg-white p-5 md:p-6 shadow-sm dark:bg-zinc-900 space-y-4">
-                <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
-                  <h2 className="text-sm font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider flex items-center gap-2">
-                    <Database className="h-4.5 w-4.5" />
-                    Backend Configuration (Admin)
-                  </h2>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="use-supabase"
-                      checked={useSupabase}
-                      onChange={e => setUseSupabase(e.target.checked)}
-                      className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-800"
-                    />
-                    <label htmlFor="use-supabase" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer">
-                      Activate Sync
-                    </label>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                      Supabase Project URL
-                    </label>
-                    <input
-                      type="url"
-                      value={supabaseUrl}
-                      onChange={e => setSupabaseUrl(e.target.value)}
-                      placeholder="https://your-project.supabase.co"
-                      className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                      Supabase Anon Key
-                    </label>
-                    <input
-                      type="password"
-                      value={supabaseAnonKey}
-                      onChange={e => setSupabaseAnonKey(e.target.value)}
-                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                      className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800"
-                    />
-                  </div>
-
-                  {/* Action Buttons for Supabase */}
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={handleTestConnection}
-                      disabled={isTesting}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-extrabold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
-                    >
-                      <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                      {isTesting ? 'Testing Link...' : 'Test Connection'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleSeedSupabase}
-                      disabled={isSeeding}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-extrabold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
-                    >
-                      <Play className="h-4 w-4 text-emerald-500 animate-pulse" />
-                      {isSeeding ? 'Writing Seed...' : 'Seed Mock Data to DB'}
-                    </button>
-                  </div>
+                
+                {/* Seed button */}
+                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-emerald-500/20">
+                  <button
+                    type="button"
+                    onClick={handleSeedSupabase}
+                    disabled={isSeeding}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-extrabold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
+                  >
+                    <Play className="h-4 w-4 text-emerald-500 animate-pulse" />
+                    {isSeeding ? 'Writing Seed...' : 'Seed Mock Data'}
+                  </button>
+                  <p className="text-xs text-zinc-400">Inserts mock clients for testing purposes.</p>
                 </div>
               </div>
             </div>
@@ -421,43 +273,8 @@ export const SettingsPage: React.FC = () => {
             </button>
           </div>
         </form>
-
-        {/* Backup / Restore Offline Database */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-          <h2 className="text-sm font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800">
-            <Download className="h-4.5 w-4.5 text-emerald-500" />
-            LocalStorage Database Management
-          </h2>
-          
-          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            For users operating in Offline Mode, download system backups to prevent data loss. You can restore your data onto any device by uploading the saved file.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3.5 pt-2">
-            {/* Backup Button */}
-            <button
-              type="button"
-              onClick={handleBackup}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-xs font-extrabold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
-            >
-              <Download className="h-4 w-4 text-emerald-500" />
-              Export Backup JSON
-            </button>
-
-            {/* Restore Upload Trigger */}
-            <label className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-xs font-extrabold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer">
-              <Upload className="h-4 w-4 text-emerald-500" />
-              Import Backup JSON
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleRestore}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
       </div>
     </div>
   );
 };
+

@@ -1,22 +1,14 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Client, Attendance, MembershipHistory, GymSettings } from '../types';
-import { GymDB, getSavedSettings } from './db';
+import { GymDB } from './db';
 
 let cachedClient: SupabaseClient | null = null;
 let cachedUrl = '';
 let cachedKey = '';
 
 export const getSupabaseClient = (): SupabaseClient | null => {
-  // Try to load env variables first, if they exist
-  let url = import.meta.env.VITE_SUPABASE_URL || '';
-  let key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-  // Fall back to settings entered in settings page
-  const settings = getSavedSettings();
-  if (settings.supabaseUrl && settings.supabaseAnonKey) {
-    url = settings.supabaseUrl;
-    key = settings.supabaseAnonKey;
-  }
+  const url = import.meta.env.VITE_SUPABASE_URL || '';
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
   if (!url || !key) {
     return null;

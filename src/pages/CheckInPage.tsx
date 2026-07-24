@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { db, getSavedSettings } from '../services/db';
+import { db, defaultSettings } from '../services/db';
+import { GymSettings } from '../types';
 
 export const CheckInPage: React.FC = () => {
   const [step, setStep] = useState<'request_location' | 'verifying' | 'input' | 'success' | 'error'>('request_location');
@@ -9,6 +10,16 @@ export const CheckInPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successDetails, setSuccessDetails] = useState<any>(null);
   const [failCount, setFailCount] = useState(0);
+
+  const [gymSettings, setGymSettings] = useState<GymSettings>(defaultSettings);
+  
+  useEffect(() => {
+    db.getGlobalSettings().then(settings => {
+      if (settings) {
+        setGymSettings(prev => ({ ...prev, ...settings }));
+      }
+    });
+  }, []);
 
   const requestLocation = useCallback((isRetry = false) => {
     setStep('verifying');
@@ -144,14 +155,14 @@ export const CheckInPage: React.FC = () => {
       <div className="bg-zinc-800 p-8 rounded-xl shadow-2xl w-full max-w-md border border-zinc-700">
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/30 overflow-hidden shrink-0">
-            {getSavedSettings().logoUrl && getSavedSettings().logoUrl !== 'Dumbbell' ? (
-              <img src={getSavedSettings().logoUrl} alt="Gym Logo" className="h-full w-full object-cover" />
+            {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
+              <img src={gymSettings.logoUrl} alt="Gym Logo" className="h-full w-full object-cover" />
             ) : (
               <span className="text-2xl">💪</span>
             )}
           </div>
           <h1 className="text-3xl font-extrabold text-center tracking-tight text-white mb-0.5">
-            {getSavedSettings().gymName}
+            {gymSettings.gymName}
           </h1>
           <span className="text-xs font-semibold text-zinc-400 mb-6">
             Zen Tracker

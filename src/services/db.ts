@@ -1,5 +1,4 @@
 import { Client, Attendance, MembershipHistory, GymSettings } from '../types';
-import { localStorageDb } from './localStorageDb';
 import { supabaseDb } from './supabaseDb';
 
 export interface GymDB {
@@ -43,143 +42,17 @@ export interface GymDB {
   updateGlobalSettings(settings: Partial<GymSettings>): Promise<boolean>;
 }
 
-// Settings helper
-const SETTINGS_KEY = 'gym_tracker_settings';
+export const db: GymDB = supabaseDb;
+
 export const defaultSettings: GymSettings = {
   gymName: 'Iron Temple Gym',
   logoUrl: 'Dumbbell', // lucide icon name
   theme: 'dark',
   supabaseUrl: '',
   supabaseAnonKey: '',
-  useSupabase: false,
+  useSupabase: true,
   gymLocationLat: 10.936700,
   gymLocationLng: 76.955857,
   gymLocationRadius: 500,
-};
-
-export const getSavedSettings = (): GymSettings => {
-  const data = localStorage.getItem(SETTINGS_KEY);
-  if (!data) return defaultSettings;
-  try {
-    return { ...defaultSettings, ...JSON.parse(data) };
-  } catch {
-    return defaultSettings;
-  }
-};
-
-export const saveSavedSettings = (settings: GymSettings) => {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-};
-
-const isSupabaseConfigured = (settings: GymSettings) => {
-  return (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) || 
-         (settings.useSupabase && settings.supabaseUrl && settings.supabaseAnonKey);
-};
-
-// Dispatcher that delegates database operations based on configuration settings
-export const db: GymDB = {
-  async getClients() {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.getClients();
-    }
-    return localStorageDb.getClients();
-  },
-
-  async addClient(client) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.addClient(client);
-    }
-    return localStorageDb.addClient(client);
-  },
-
-  async updateClient(id, client) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.updateClient(id, client);
-    }
-    return localStorageDb.updateClient(id, client);
-  },
-
-  async deleteClient(id) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.deleteClient(id);
-    }
-    return localStorageDb.deleteClient(id);
-  },
-
-  async getAttendance(date) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.getAttendance(date);
-    }
-    return localStorageDb.getAttendance(date);
-  },
-
-  async getAttendanceRange(startDate, endDate) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.getAttendanceRange(startDate, endDate);
-    }
-    return localStorageDb.getAttendanceRange(startDate, endDate);
-  },
-
-  async markAttendance(clientId, date, status) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.markAttendance(clientId, date, status);
-    }
-    return localStorageDb.markAttendance(clientId, date, status);
-  },
-
-  async getMembershipHistory(clientId) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.getMembershipHistory(clientId);
-    }
-    return localStorageDb.getMembershipHistory(clientId);
-  },
-
-  async addMembershipHistory(history) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.addMembershipHistory(history);
-    }
-    return localStorageDb.addMembershipHistory(history);
-  },
-
-  async processSelfCheckIn(params) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.processSelfCheckIn(params);
-    }
-    return localStorageDb.processSelfCheckIn(params);
-  },
-
-  async clearTestDeviceHistory(deviceFingerprint) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.clearTestDeviceHistory(deviceFingerprint);
-    }
-    return localStorageDb.clearTestDeviceHistory(deviceFingerprint);
-  },
-
-  async getGlobalSettings() {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.getGlobalSettings();
-    }
-    return null;
-  },
-
-  async updateGlobalSettings(newSettings) {
-    const settings = getSavedSettings();
-    if (isSupabaseConfigured(settings)) {
-      return supabaseDb.updateGlobalSettings(newSettings);
-    }
-    return false;
-  }
 };
 

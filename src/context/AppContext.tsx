@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Client, Attendance, AppNotification, GymSettings } from '../types';
-import { db, getSavedSettings, saveSavedSettings, defaultSettings } from '../services/db';
+import { db, defaultSettings } from '../services/db';
 import { getSupabaseClient } from '../services/supabaseDb';
 
 interface AppContextType {
@@ -44,21 +44,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Load settings on startup
   useEffect(() => {
-    const saved = getSavedSettings();
-    setSettings(saved);
-    applyTheme(saved.theme);
+    // Start with default settings to avoid crash
+    setSettings(defaultSettings);
+    applyTheme(defaultSettings.theme);
 
-    // Fetch from Supabase if configured
-    if (saved.useSupabase || import.meta.env.VITE_SUPABASE_URL) {
-      db.getGlobalSettings().then(globalSettings => {
-        if (globalSettings) {
-          const merged = { ...saved, ...globalSettings };
-          setSettings(merged);
-          saveSavedSettings(merged);
-          applyTheme(merged.theme);
-        }
-      });
-    }
+    // Fetch from Supabase
+    db.getGlobalSettings().then(globalSettings => {
+      if (globalSettings) {
+        const merged = { ...defaultSettings, ...globalSettings };
+        setSettings(merged);
+        applyTheme(merged.theme);
+      }
+    });
   }, []);
 
   // Sync data when settings/db configuration changes
@@ -103,20 +100,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setTheme = async (theme: 'light' | 'dark') => {
     const updated = { ...settings, theme };
     setSettings(updated);
-    saveSavedSettings(updated);
     applyTheme(theme);
-    if (updated.useSupabase || import.meta.env.VITE_SUPABASE_URL) {
-      await db.updateGlobalSettings(updated);
-    }
+    await db.updateGlobalSettings(updated);
   };
 
   const updateSettings = async (updated: GymSettings) => {
     setSettings(updated);
-    saveSavedSettings(updated);
     applyTheme(updated.theme);
-    if (updated.useSupabase || import.meta.env.VITE_SUPABASE_URL) {
-      await db.updateGlobalSettings(updated);
-    }
+    await db.updateGlobalSettings(updated);
     addNotification('success', 'Settings updated successfully');
   };
 
