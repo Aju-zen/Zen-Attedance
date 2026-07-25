@@ -110,7 +110,7 @@ export const CheckInPage: React.FC = () => {
         const radius = gymSettings.gymLocationRadius || 50;
         
         if (dist > radius) {
-          setErrorMessage(`You are not inside the gym. (Distance: ${Math.round(dist)}m, Allowed: ${radius}m)`);
+          setErrorMessage('You are not inside the gym.');
           setStep('error');
           return;
         }
@@ -272,7 +272,7 @@ export const CheckInPage: React.FC = () => {
             <button 
               onClick={() => {
                 setMembershipNumber('');
-                if (errorMessage.includes('Location permission')) {
+                if (errorMessage.includes('Location') || errorMessage.includes('not inside the gym')) {
                   requestLocation(true);
                 } else {
                   setStep('input');
