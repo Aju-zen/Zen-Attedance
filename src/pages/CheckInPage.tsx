@@ -11,6 +11,21 @@ export const CheckInPage: React.FC = () => {
   const [successDetails, setSuccessDetails] = useState<any>(null);
   const [failCount, setFailCount] = useState(0);
 
+  // Distance calculation function (Haversine)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371e3; // metres
+    const p1 = lat1 * Math.PI/180;
+    const p2 = lat2 * Math.PI/180;
+    const dp = (lat2-lat1) * Math.PI/180;
+    const dl = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(dp/2) * Math.sin(dp/2) +
+              Math.cos(p1) * Math.cos(p2) *
+              Math.sin(dl/2) * Math.sin(dl/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   const [gymSettings, setGymSettings] = useState<GymSettings>(defaultSettings);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   
@@ -43,7 +58,7 @@ export const CheckInPage: React.FC = () => {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-        setStep('input');
+        // Transition handled by the new useEffect that waits for settings to load
       },
       (error) => {
         console.error('Geolocation error:', error);
@@ -81,6 +96,28 @@ export const CheckInPage: React.FC = () => {
     // Automatically ask for location on mount (not a retry)
     requestLocation(false);
   }, [requestLocation]);
+
+  // Client-side location verification
+  useEffect(() => {
+    if (location && !isLoadingSettings && step === 'verifying') {
+      if (gymSettings.gymLocationLat && gymSettings.gymLocationLng) {
+        const dist = calculateDistance(
+          location.lat, 
+          location.lng, 
+          gymSettings.gymLocationLat, 
+          gymSettings.gymLocationLng
+        );
+        const radius = gymSettings.gymLocationRadius || 50;
+        
+        if (dist > radius) {
+          setErrorMessage(`You are not inside the gym. (Distance: ${Math.round(dist)}m, Allowed: ${radius}m)`);
+          setStep('error');
+          return;
+        }
+      }
+      setStep('input');
+    }
+  }, [location, isLoadingSettings, gymSettings, step]);
 
   if (isLoadingSettings) {
     return (
