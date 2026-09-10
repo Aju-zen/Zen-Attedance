@@ -86,13 +86,13 @@ export const AttendancePage: React.FC = () => {
     return rangeAttendance.find(a => a.client_id === clientId && a.date === dateStr);
   };
 
-  const getStatus = (clientId: string, dateStr: string): 'Present' | 'Absent' | null => {
+  const getStatus = (clientId: string, dateStr: string): 'Present' | 'Absent' => {
     const record = getAttendanceRecord(clientId, dateStr);
-    return record ? record.status : null;
+    return record ? record.status : 'Absent';
   };
 
   // Handle toggle (Present/Absent)
-  const handleToggle = async (clientId: string, dateStr: string, currentStatus: 'Present' | 'Absent' | null) => {
+  const handleToggle = async (clientId: string, dateStr: string, currentStatus: 'Present' | 'Absent') => {
     const newStatus = currentStatus === 'Present' ? 'Absent' : 'Present';
     await markAttendance(clientId, dateStr, newStatus);
     fetchRangeAttendance();
@@ -410,18 +410,14 @@ export const AttendancePage: React.FC = () => {
                                 className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
                                   status === 'Present'
                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs shadow-emerald-500/30'
-                                    : status === 'Absent'
-                                      ? 'bg-rose-500 border-rose-500 text-white shadow-xs shadow-rose-500/30'
-                                      : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:border-emerald-500/50 hover:text-emerald-500'
+                                    : 'bg-rose-500 border-rose-500 text-white shadow-xs shadow-rose-500/30'
                                 }`}
                                 title={status === 'Present' ? 'Mark Absent' : 'Mark Present'}
                               >
                                 {status === 'Present' ? (
                                   <Check className="h-4.5 w-4.5 stroke-[3]" />
-                                ) : status === 'Absent' ? (
-                                  <X className="h-4.5 w-4.5 stroke-[3]" />
                                 ) : (
-                                  <span className="text-xs font-bold">-</span>
+                                  <X className="h-4.5 w-4.5 stroke-[3]" />
                                 )}
                               </button>
                             </div>

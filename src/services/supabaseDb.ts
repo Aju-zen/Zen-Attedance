@@ -238,6 +238,41 @@ export const supabaseDb: GymDB = {
     return data as Attendance;
   },
 
+  async initializeDailyAttendance(dateStr?: string): Promise<void> {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+
+    try {
+      // 1. Try calling the Supabase PostgreSQL RPC function
+      const { error: rpcErr } = await supabase.rpc('initialize_daily_attendance', {
+        p_date: targetDate
+      });
+
+      if (rpcErr) {
+        // Fallback: Query active clients and batch insert 'Absent' status if not exists
+        const { data: activeClients } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('status', 'Active');
+
+        if (activeClients && activeClients.length > 0) {
+          const records = activeClients.map((c: any) => ({
+            client_id: c.id,
+            date: targetDate,
+            status: 'Absent'
+          }));
+
+          await supabase
+            .from('attendance')
+            .upsert(records, { onConflict: 'client_id,date', ignoreDuplicates: true });
+        }
+      }
+    } catch (e) {
+      console.warn('Auto-initialization of daily attendance:', e);
+    }
+  },
+
   async getMembershipHistory(clientId): Promise<MembershipHistory[]> {
     const supabase = getSupabaseClient();
     if (!supabase) throw new Error('Supabase client not initialized');

@@ -19,6 +19,7 @@ export interface GymDB {
   getAttendance(date: string): Promise<Attendance[]>;
   getAttendanceRange(startDate: string, endDate: string): Promise<Attendance[]>;
   markAttendance(clientId: string, date: string, status: 'Present' | 'Absent'): Promise<Attendance>;
+  initializeDailyAttendance(date?: string): Promise<void>;
 
   // Membership History
   getMembershipHistory(clientId: string): Promise<MembershipHistory[]>;
@@ -55,4 +56,3 @@ export const defaultSettings: GymSettings = {
   gymLocationLng: 76.955857,
   gymLocationRadius: 500,
 };
-

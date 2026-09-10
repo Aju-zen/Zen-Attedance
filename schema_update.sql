@@ -1,4 +1,4 @@
--- Update schema for Client Self Check-In & System Settings
+-- Update schema for Client Self Check-In, Daily Auto-Absent Initialization, & System Settings
 
 -- 1. Create Device Check-ins Table
 CREATE TABLE IF NOT EXISTS device_checkins (
@@ -68,7 +68,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 5. Self Check-In RPC
+-- 5. Auto-Initialize Daily Attendance to 'Absent' for all active clients
+CREATE OR REPLACE FUNCTION initialize_daily_attendance(p_date DATE DEFAULT CURRENT_DATE)
+RETURNS void AS $$
+BEGIN
+    INSERT INTO attendance (client_id, date, status)
+    SELECT id, p_date, 'Absent'
+    FROM clients
+    WHERE status = 'Active'
+    ON CONFLICT (client_id, date) DO NOTHING;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 6. Self Check-In RPC (turns Absent -> Present on check in)
 CREATE OR REPLACE FUNCTION process_self_check_in(
     p_membership_number TEXT,
     p_device_fingerprint TEXT,
@@ -128,7 +140,7 @@ BEGIN
         RETURN json_build_object('success', false, 'error', 'This device has already been used today to check in another member.');
     END IF;
 
-    -- 4. Check Duplicate Attendance
+    -- 4. Check Duplicate Attendance (if already present)
     SELECT id INTO v_existing_checkin
     FROM attendance
     WHERE client_id = v_client_id AND date = CURRENT_DATE AND status = 'Present';
@@ -137,7 +149,7 @@ BEGIN
         RETURN json_build_object('success', false, 'error', 'Attendance already marked today.');
     END IF;
 
-    -- 5. Insert Records
+    -- 5. Insert or Update Records
     INSERT INTO device_checkins (
         device_fingerprint, membership_number, ip_address, browser, location_latitude, location_longitude
     ) VALUES (
@@ -166,7 +178,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 6. Row Level Security (RLS) Policies
+-- 7. Row Level Security (RLS) Policies
 ALTER TABLE device_checkins ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for anon on device_checkins" ON device_checkins;
 CREATE POLICY "Allow all for anon on device_checkins" ON device_checkins FOR ALL USING (true) WITH CHECK (true);

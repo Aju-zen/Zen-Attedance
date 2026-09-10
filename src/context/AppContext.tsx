@@ -68,7 +68,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Load attendance when selected date changes or clients reload
   useEffect(() => {
-    loadAttendance(selectedDate);
+    db.initializeDailyAttendance(selectedDate).then(() => {
+      loadAttendance(selectedDate);
+    });
   }, [selectedDate, clients]);
 
   const applyTheme = (theme: 'light' | 'dark') => {
