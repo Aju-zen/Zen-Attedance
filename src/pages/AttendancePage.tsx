@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { Attendance } from '../types';
-import { Search, Check, X, Calendar, CalendarRange, ChevronRight } from 'lucide-react';
+import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2 } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 
 export const AttendancePage: React.FC = () => {
@@ -14,6 +14,7 @@ export const AttendancePage: React.FC = () => {
   } = useApp();
 
   const [dateMode, setDateMode] = useState<'single' | 'range'>('single');
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 6);
@@ -55,6 +56,9 @@ export const AttendancePage: React.FC = () => {
     if (!earliestDate || !latestDate) return;
     setLoadingRange(true);
     try {
+      if (dateMode === 'single') {
+        await db.initializeDailyAttendance(selectedDate);
+      }
       const logs = await db.getAttendanceRange(earliestDate, latestDate);
       setRangeAttendance(logs);
     } catch (e) {
@@ -120,7 +124,6 @@ export const AttendancePage: React.FC = () => {
         if (statusFilter === 'active') return client.status === 'Active';
         if (statusFilter === 'expired') return client.status === 'Expired';
         if (statusFilter === 'self_check_in') {
-          // Check if marked present via self checkin on ANY active date
           return rangeAttendance.some(
             a => a.client_id === client.id && activeDates.includes(a.date) && a.status === 'Present' && a.device_fingerprint
           );
@@ -139,22 +142,47 @@ export const AttendancePage: React.FC = () => {
   const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col h-full">
+    <div
+      className={`flex flex-col h-full ${
+        isFullScreen
+          ? 'fixed inset-0 z-[100] bg-zinc-50 dark:bg-zinc-950 p-3 sm:p-4 overflow-hidden w-screen h-screen'
+          : 'space-y-5 max-w-7xl mx-auto px-4 md:px-6 py-6'
+      }`}
+    >
       {/* Page Title & View Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-800 dark:text-white tracking-tight">
-            Attendance Logs
-          </h1>
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
-            Track daily attendance or inspect multi-day logs across custom date ranges.
-          </p>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-zinc-800 dark:text-white tracking-tight flex items-center gap-2">
+              Attendance Logs
+              {isFullScreen && (
+                <span className="text-2xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-wide">
+                  Full Screen
+                </span>
+              )}
+            </h1>
+            {!isFullScreen && (
+              <p className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Track daily presence or inspect multi-day logs across custom date ranges.
+              </p>
+            )}
+          </div>
+
+          {/* Full Screen Toggle Button on mobile top */}
+          <button
+            type="button"
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="lg:hidden p-2 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer shrink-0 ml-2"
+            title={isFullScreen ? 'Exit Fullscreen' : 'Fullscreen View'}
+          >
+            {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
         </div>
 
         {/* Date Mode & Selection Panel */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white dark:bg-zinc-900 p-2.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2.5 bg-white dark:bg-zinc-900 p-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs">
           {/* Mode Switcher */}
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl shrink-0">
+          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-0.5 rounded-xl shrink-0">
             <button
               type="button"
               onClick={() => setDateMode('single')}
@@ -183,7 +211,7 @@ export const AttendancePage: React.FC = () => {
 
           {/* Date Picker Controls */}
           {dateMode === 'single' ? (
-            <div className="w-full sm:w-48">
+            <div className="w-40 sm:w-44">
               <CustomDatePicker
                 value={selectedDate}
                 onChange={setSelectedDate}
@@ -192,8 +220,8 @@ export const AttendancePage: React.FC = () => {
               />
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="w-full sm:w-40">
+            <div className="flex items-center gap-1.5">
+              <div className="w-32 sm:w-36">
                 <CustomDatePicker
                   value={startDate}
                   onChange={setStartDate}
@@ -202,8 +230,8 @@ export const AttendancePage: React.FC = () => {
                   align="left"
                 />
               </div>
-              <span className="text-xs font-bold text-zinc-400 text-center sm:text-left">to</span>
-              <div className="w-full sm:w-40">
+              <span className="text-xs font-bold text-zinc-400">to</span>
+              <div className="w-32 sm:w-36">
                 <CustomDatePicker
                   value={endDate}
                   onChange={setEndDate}
@@ -214,12 +242,32 @@ export const AttendancePage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Full Screen Toggle Button (Desktop & Tablet) */}
+          <button
+            type="button"
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer shadow-xs"
+            title={isFullScreen ? 'Exit Full Screen' : 'View in Full Screen'}
+          >
+            {isFullScreen ? (
+              <>
+                <Minimize2 className="h-3.5 w-3.5 text-emerald-500" />
+                Exit Fullscreen
+              </>
+            ) : (
+              <>
+                <Maximize2 className="h-3.5 w-3.5 text-emerald-500" />
+                Fullscreen
+              </>
+            )}
+          </button>
         </div>
       </div>
 
       {/* Date Range Quick Presets (Shown when in Date Range mode) */}
       {dateMode === 'range' && (
-        <div className="flex flex-wrap items-center gap-2 bg-emerald-500/5 dark:bg-emerald-500/10 p-2.5 rounded-2xl border border-emerald-500/20">
+        <div className="flex flex-wrap items-center gap-1.5 bg-emerald-500/5 dark:bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 shrink-0">
           <button
             type="button"
             onClick={() => setPreset(3)}
@@ -252,24 +300,24 @@ export const AttendancePage: React.FC = () => {
       )}
 
       {/* Search & Filters */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+      <div className="flex flex-col md:flex-row gap-2.5 items-stretch md:items-center shrink-0">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3.5 top-3 h-3.5 w-3.5 text-zinc-400" />
           <input
             type="text"
             placeholder="Search by client name, membership #, or phone..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:bg-zinc-900"
+            className="w-full rounded-xl border border-zinc-200 bg-white pl-9 pr-4 py-2 text-xs sm:text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:bg-zinc-900"
           />
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 md:pb-0 shrink-0">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`rounded-xl px-4 py-3 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0 ${
+            className={`rounded-xl px-3 py-2 text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer shrink-0 ${
               statusFilter === 'all'
                 ? 'bg-emerald-600 text-white dark:bg-emerald-500'
                 : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
@@ -279,7 +327,7 @@ export const AttendancePage: React.FC = () => {
           </button>
           <button
             onClick={() => setStatusFilter('active')}
-            className={`rounded-xl px-4 py-3 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0 ${
+            className={`rounded-xl px-3 py-2 text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer shrink-0 ${
               statusFilter === 'active'
                 ? 'bg-emerald-600 text-white dark:bg-emerald-500'
                 : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
@@ -289,7 +337,7 @@ export const AttendancePage: React.FC = () => {
           </button>
           <button
             onClick={() => setStatusFilter('expired')}
-            className={`rounded-xl px-4 py-3 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0 ${
+            className={`rounded-xl px-3 py-2 text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer shrink-0 ${
               statusFilter === 'expired'
                 ? 'bg-rose-600 text-white dark:bg-rose-500'
                 : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
@@ -299,7 +347,7 @@ export const AttendancePage: React.FC = () => {
           </button>
           <button
             onClick={() => setStatusFilter('self_check_in')}
-            className={`rounded-xl px-4 py-3 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0 ${
+            className={`rounded-xl px-3 py-2 text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer shrink-0 ${
               statusFilter === 'self_check_in'
                 ? 'bg-indigo-600 text-white dark:bg-indigo-500'
                 : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
@@ -310,37 +358,38 @@ export const AttendancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Attendance Logs Table */}
-      <div className="flex-1 rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
+      {/* Attendance Logs Table (with Freeze Panes: Fixed Header, Fixed Name Column, Fixed Summary Column) */}
+      <div className="flex-1 min-h-0 rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-auto relative">
           <table className="w-full border-collapse text-left min-w-full">
-            {/* Table Header */}
-            <thead className="bg-zinc-50 dark:bg-zinc-900/90 border-b border-zinc-200 dark:border-zinc-800">
+            {/* Table Header (Sticky Top) */}
+            <thead className="bg-zinc-100 dark:bg-zinc-800/95 sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-700">
               <tr>
-                <th className="sticky left-0 z-20 bg-zinc-50 dark:bg-zinc-900 px-5 py-4 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 min-w-[200px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                  Client Name
+                {/* Top-Left Corner Header Cell (Pinned on Left and Top) */}
+                <th className="sticky top-0 left-0 z-40 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 min-w-[220px] max-w-[280px] shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-200 dark:border-zinc-700">
+                  Client Info
                 </th>
                 
-                {/* Date Columns */}
+                {/* Date Header Columns (Scroll Horizontally, Sticky on Top) */}
                 {activeDates.map(dateStr => {
                   const header = formatDateHeader(dateStr);
                   const isToday = dateStr === todayStr;
                   return (
                     <th
                       key={dateStr}
-                      className={`px-4 py-3 text-center text-xs font-bold uppercase tracking-wider min-w-[90px] border-l border-zinc-100 dark:border-zinc-800/60 ${
+                      className={`sticky top-0 z-30 px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wider min-w-[85px] border-l border-zinc-200 dark:border-zinc-700/80 ${
                         isToday
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : 'text-zinc-600 dark:text-zinc-300'
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
                       <div className="flex flex-col items-center">
                         <span className="text-3xs text-zinc-400 dark:text-zinc-500">{header.weekday}</span>
-                        <span className={`text-xs ${isToday ? 'font-black' : 'font-bold'}`}>
+                        <span className={`text-xs ${isToday ? 'font-black text-emerald-600 dark:text-emerald-400' : 'font-bold'}`}>
                           {header.dayMonth}
                         </span>
                         {isToday && (
-                          <span className="text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400 mt-0.5">
+                          <span className="text-[8px] font-black uppercase text-emerald-600 dark:text-emerald-400">
                             Today
                           </span>
                         )}
@@ -349,9 +398,9 @@ export const AttendancePage: React.FC = () => {
                   );
                 })}
 
-                {/* Range Summary Column */}
+                {/* Range Summary Column Header (Pinned on Right and Top) */}
                 {activeDates.length > 1 && (
-                  <th className="px-5 py-4 text-center text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 min-w-[110px] border-l border-zinc-200 dark:border-zinc-800">
+                  <th className="sticky top-0 right-0 z-40 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 text-center text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 min-w-[105px] shadow-[-2px_0_6px_-2px_rgba(0,0,0,0.08)] border-l border-zinc-200 dark:border-zinc-700">
                     Summary
                   </th>
                 )}
@@ -370,27 +419,25 @@ export const AttendancePage: React.FC = () => {
                   }, 0);
 
                   return (
-                    <tr key={client.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 transition-colors">
-                      {/* Sticky Client Info Column */}
-                      <td className="sticky left-0 z-10 bg-white dark:bg-zinc-900 px-5 py-3.5 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">
-                              {client.membership_number || 'No #'}
-                            </span>
-                            <span className="font-bold text-zinc-800 dark:text-white text-sm leading-tight">
-                              {client.name}
-                            </span>
-                          </div>
+                    <tr key={client.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30 transition-colors">
+                      {/* Left Frozen Column: Membership Number & Name in Same Line */}
+                      <td className="sticky left-0 z-20 bg-white dark:bg-zinc-900 px-4 py-3 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-100 dark:border-zinc-800 min-w-[220px] max-w-[280px]">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-500/15 px-2 py-0.5 rounded-md shrink-0">
+                            {client.membership_number || 'No #'}
+                          </span>
+                          <span className="font-bold text-zinc-800 dark:text-white text-sm truncate" title={client.name}>
+                            {client.name}
+                          </span>
                           {isExpired && (
-                            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-3xs font-black tracking-wide uppercase text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
-                              Expired
+                            <span className="inline-flex items-center rounded-full bg-rose-50 px-1.5 py-0.5 text-3xs font-black tracking-wide uppercase text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 shrink-0 ml-auto">
+                              Exp
                             </span>
                           )}
                         </div>
                       </td>
 
-                      {/* Date Status Toggle Cells */}
+                      {/* Middle Scrollable Date Status Toggle Cells */}
                       {activeDates.map(dateStr => {
                         const status = getStatus(client.id, dateStr);
                         const isToday = dateStr === todayStr;
@@ -398,7 +445,7 @@ export const AttendancePage: React.FC = () => {
                         return (
                           <td
                             key={dateStr}
-                            className={`px-3 py-3 text-center border-l border-zinc-100 dark:border-zinc-800/40 ${
+                            className={`px-2.5 py-2.5 text-center border-l border-zinc-100 dark:border-zinc-800/40 min-w-[85px] ${
                               isToday ? 'bg-emerald-500/5 dark:bg-emerald-500/5' : ''
                             }`}
                           >
@@ -407,7 +454,7 @@ export const AttendancePage: React.FC = () => {
                                 type="button"
                                 disabled={isExpired}
                                 onClick={() => handleToggle(client.id, dateStr, status)}
-                                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
+                                className={`flex h-8.5 w-8.5 items-center justify-center rounded-xl border transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
                                   status === 'Present'
                                     ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs shadow-emerald-500/30'
                                     : 'bg-rose-500 border-rose-500 text-white shadow-xs shadow-rose-500/30'
@@ -415,9 +462,9 @@ export const AttendancePage: React.FC = () => {
                                 title={status === 'Present' ? 'Mark Absent' : 'Mark Present'}
                               >
                                 {status === 'Present' ? (
-                                  <Check className="h-4.5 w-4.5 stroke-[3]" />
+                                  <Check className="h-4 w-4 stroke-[3]" />
                                 ) : (
-                                  <X className="h-4.5 w-4.5 stroke-[3]" />
+                                  <X className="h-4 w-4 stroke-[3]" />
                                 )}
                               </button>
                             </div>
@@ -425,11 +472,11 @@ export const AttendancePage: React.FC = () => {
                         );
                       })}
 
-                      {/* Multi-day Summary Column */}
+                      {/* Right Frozen Column: Multi-day Summary */}
                       {activeDates.length > 1 && (
-                        <td className="px-5 py-3.5 text-center border-l border-zinc-200 dark:border-zinc-800">
+                        <td className="sticky right-0 z-20 bg-white dark:bg-zinc-900 px-4 py-3 text-center shadow-[-2px_0_6px_-2px_rgba(0,0,0,0.08)] border-l border-zinc-200 dark:border-zinc-800 min-w-[105px]">
                           <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-extrabold ${
+                            className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-extrabold ${
                               clientPresentCount > 0
                                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
                                 : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
