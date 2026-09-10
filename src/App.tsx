@@ -35,11 +35,11 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-250">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-800 dark:text-zinc-100 transition-colors duration-250">
       {settingsLoaded ? (
         <>
           <Sidebar />
-          <main className="flex-1 w-full overflow-y-auto pb-20 md:pb-0">
+          <main className="flex-1 w-full overflow-y-auto pb-20 lg:pb-0 app-main-content">
             {renderPage()}
           </main>
           <NotificationToast />

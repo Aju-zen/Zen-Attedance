@@ -30,7 +30,7 @@ export const Sidebar: React.FC = () => {
   return (
     <>
       {/* Sticky Mobile Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-zinc-200 bg-white/90 backdrop-blur-md px-4 py-3 shadow-sm md:hidden dark:border-zinc-800 dark:bg-zinc-900/90 no-print">
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-zinc-200 bg-white/90 backdrop-blur-md px-4 py-3 shadow-sm lg:hidden mobile-header dark:border-zinc-800 dark:bg-zinc-900/90 no-print">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 dark:bg-emerald-500 text-white overflow-hidden shrink-0 shadow-lg shadow-emerald-500/30">
             {settings.logoUrl && settings.logoUrl !== 'Dumbbell' ? (
@@ -51,7 +51,7 @@ export const Sidebar: React.FC = () => {
 
         <button
           onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
-          className="rounded-full bg-zinc-100 p-2 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors"
+          className="rounded-full bg-zinc-100 p-2 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           aria-label="Toggle Theme"
         >
           {currentTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -59,7 +59,7 @@ export const Sidebar: React.FC = () => {
       </header>
 
       {/* Bottom Navigation for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-zinc-200 bg-white pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:hidden dark:border-zinc-800 dark:bg-zinc-900 no-print">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-zinc-200 bg-white pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] lg:hidden mobile-bottom-nav dark:border-zinc-800 dark:bg-zinc-900 no-print">
         {navItems.filter(item => !item.desktopOnly).map(item => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -67,7 +67,7 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActivePage(item.id)}
-              className={`flex flex-col items-center justify-center w-full py-1 gap-1 transition-all
+              className={`flex flex-col items-center justify-center w-full py-1 gap-1 transition-all cursor-pointer
                 ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
             >
               <div className={`flex items-center justify-center rounded-xl p-1.5 transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-500/15' : ''}`}>
@@ -82,7 +82,7 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Navigation Sidebar (Desktop) */}
-      <aside className="hidden md:flex sticky top-0 z-30 h-screen w-64 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 no-print">
+      <aside className="hidden lg:flex sticky top-0 z-30 h-screen w-64 flex-col border-r border-zinc-200 bg-white desktop-sidebar dark:border-zinc-800 dark:bg-zinc-900 no-print">
         {/* Sidebar Header */}
         <div className="flex items-center gap-3 px-6 py-6 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 dark:bg-emerald-500 text-white overflow-hidden shadow-lg shadow-emerald-500/30">
@@ -111,7 +111,7 @@ export const Sidebar: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActivePage(item.id)}
-                className={`flex w-full items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150
+                className={`flex w-full items-center gap-3.5 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 cursor-pointer
                   ${
                     isActive
                       ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
@@ -148,7 +148,7 @@ export const Sidebar: React.FC = () => {
           {/* Theme Toggler (Desktop Only) */}
           <button
             onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
-            className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-200 transition-all"
+            className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-200 transition-all cursor-pointer"
           >
             <div className="flex items-center gap-3">
               {currentTheme === 'dark' ? (

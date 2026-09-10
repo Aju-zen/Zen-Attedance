@@ -34,6 +34,26 @@
   background-color: color-mix(in srgb, currentColor 30%, transparent);
 }
 
+/* Mobile Landscape Mode Optimizations */
+@media (max-height: 600px) {
+  .desktop-sidebar {
+    display: none !important;
+  }
+  .mobile-header {
+    display: flex !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  .mobile-bottom-nav {
+    display: flex !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+  .app-main-content {
+    padding-bottom: 4.5rem !important;
+  }
+}
+
 /* Print stylesheet for high-quality reports (PDF export) */
 @media print {
   body {
