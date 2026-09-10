@@ -219,10 +219,7 @@ export const AttendancePage: React.FC = () => {
 
       {/* Date Range Quick Presets (Shown when in Date Range mode) */}
       {dateMode === 'range' && (
-        <div className="flex flex-wrap items-center gap-2 bg-emerald-500/5 dark:bg-emerald-500/10 p-3 rounded-2xl border border-emerald-500/20">
-          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mr-1">
-            Quick Ranges:
-          </span>
+        <div className="flex flex-wrap items-center gap-2 bg-emerald-500/5 dark:bg-emerald-500/10 p-2.5 rounded-2xl border border-emerald-500/20">
           <button
             type="button"
             onClick={() => setPreset(3)}
@@ -251,9 +248,6 @@ export const AttendancePage: React.FC = () => {
           >
             Last 30 Days
           </button>
-          <span className="text-3xs text-zinc-400 dark:text-zinc-500 ml-auto font-medium">
-            Showing {activeDates.length} day{activeDates.length !== 1 ? 's' : ''} ({earliestDate} → {latestDate})
-          </span>
         </div>
       )}
 
