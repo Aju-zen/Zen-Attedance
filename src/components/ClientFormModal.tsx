@@ -35,7 +35,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
         setNotes(client.notes || '');
       }
     } else {
-      // Clear form if adding new - only compulsory fields will need to be provided
+      // Clear form if adding new
       setMembershipNumber('');
       setName('');
       setPhone('');
@@ -106,13 +106,10 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
             <h2 className="text-xl font-bold text-zinc-800 dark:text-white">
               {clientId ? 'Edit Client Details' : 'Add New Client'}
             </h2>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-              Only Membership #, Name, and End Date are mandatory.
-            </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
+            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -158,13 +155,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
 
           <div>
             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-              Mobile Number <span className="text-xs font-normal text-zinc-400">(Optional)</span>
+              Mobile Number
             </label>
             <input
               type="tel"
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              placeholder="e.g. +91 98765 43210 (Optional)"
+              placeholder="e.g. +91 98765 43210"
               className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition duration-150 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:focus:border-emerald-500"
             />
           </div>
@@ -172,13 +169,13 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                Start Date <span className="text-xs font-normal text-zinc-400">(Optional)</span>
+                Start Date
               </label>
               <CustomDatePicker
                 value={membershipStart}
                 onChange={setMembershipStart}
                 align="left"
-                placeholder="Select Start Date (Optional)"
+                placeholder="Select Start Date"
                 allowClear={true}
               />
             </div>
@@ -198,12 +195,12 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
 
           <div>
             <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-              Notes <span className="text-xs font-normal text-zinc-400">(Optional)</span>
+              Notes
             </label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Optional: health conditions, targets, training schedule..."
+              placeholder="Health conditions, targets, training schedule..."
               rows={2}
               className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition duration-150 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:focus:border-emerald-500"
             />
@@ -214,14 +211,14 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+              className="rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500 shadow-md shadow-emerald-600/10 transition-colors"
+              className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-500 shadow-md shadow-emerald-600/10 transition-colors cursor-pointer"
             >
               {isSubmitting ? 'Saving...' : clientId ? 'Update Client' : 'Add Client'}
             </button>

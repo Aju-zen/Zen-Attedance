@@ -263,11 +263,6 @@ export const CheckInPage: React.FC = () => {
                 required
                 disabled={submitting || failCount >= 10}
               />
-              {membershipNumber && (
-                <p className="text-3xs text-emerald-400/80 text-center mt-1.5 font-medium">
-                  ✓ Remembered on this device
-                </p>
-              )}
             </div>
             <button
               type="submit"
