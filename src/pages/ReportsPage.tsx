@@ -35,6 +35,7 @@ export const ReportsPage: React.FC = () => {
     return d.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [activePreset, setActivePreset] = useState<string>('30days');
 
   // Table search and sort
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,6 +65,7 @@ export const ReportsPage: React.FC = () => {
 
   // Quick Preset Handlers
   const handlePreset = (type: 'today' | '7days' | '14days' | 'thisMonth' | '30days' | '90days') => {
+    setActivePreset(type);
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
@@ -271,405 +273,380 @@ export const ReportsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-6 py-6 text-zinc-900 dark:text-zinc-100">
+    <div className="bg-white min-h-screen text-black space-y-6 max-w-7xl mx-auto px-4 md:px-6 py-6 font-sans">
       {/* Title & Actions (hidden in print) */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 no-print">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-zinc-200 no-print">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <BarChart3 className="h-7 w-7 text-emerald-500" />
+          <h1 className="text-2xl md:text-3xl font-black text-black tracking-tight flex items-center gap-2.5">
+            <BarChart3 className="h-7 w-7 text-emerald-600" />
             Attendance Reports
           </h1>
-          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400 mt-1">
-            Generate custom date range reports, analyze attendance percentages, and export summaries.
+          <p className="text-sm font-bold text-black mt-1">
+            Custom date range reports, member attendance breakdown, and duration statistics.
           </p>
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <button
             onClick={exportExcel}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-bold text-zinc-800 shadow-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-black bg-white px-4 py-2 text-sm font-bold text-black hover:bg-zinc-100 cursor-pointer transition-colors"
           >
-            <Download className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <Download className="h-4 w-4 text-emerald-700" />
             Excel Export
           </button>
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4.5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 cursor-pointer transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-black px-4.5 py-2 text-sm font-bold text-white hover:bg-zinc-800 cursor-pointer transition-colors"
           >
-            <Printer className="h-4 w-4" />
+            <Printer className="h-4 w-4 text-white" />
             Print / PDF
           </button>
         </div>
       </div>
 
-      {/* Date Range Selector & Duration Info Box (Interactive controls hidden in print) */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4 md:p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 no-print">
+      {/* Date Range Selector & Duration Info (Flat, white background, no boxes) */}
+      <div className="space-y-4 pb-4 border-b border-zinc-200 no-print">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Pickers */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="flex-1 sm:w-48">
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black mb-1">
                 From Date
               </label>
-              <CustomDatePicker value={startDate} onChange={setStartDate} />
+              <CustomDatePicker
+                value={startDate}
+                onChange={val => {
+                  setStartDate(val);
+                  setActivePreset('');
+                }}
+              />
             </div>
 
-            <div className="hidden sm:flex items-center self-end pb-2.5 text-zinc-400">
-              <span className="text-xs font-bold">to</span>
+            <div className="hidden sm:flex items-center self-end pb-2 text-black font-bold">
+              <span>to</span>
             </div>
 
             <div className="flex-1 sm:w-48">
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black mb-1">
                 To Date
               </label>
-              <CustomDatePicker value={endDate} onChange={setEndDate} />
+              <CustomDatePicker
+                value={endDate}
+                onChange={val => {
+                  setEndDate(val);
+                  setActivePreset('');
+                }}
+              />
             </div>
           </div>
 
-          {/* Quick Presets */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              onClick={() => handlePreset('today')}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            >
-              Today
-            </button>
-            <button
-              onClick={() => handlePreset('7days')}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            >
-              Last 7 Days
-            </button>
-            <button
-              onClick={() => handlePreset('14days')}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            >
-              Last 14 Days
-            </button>
-            <button
-              onClick={() => handlePreset('thisMonth')}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            >
-              This Month
-            </button>
-            <button
-              onClick={() => handlePreset('30days')}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
-            >
-              Last 30 Days
-            </button>
-            <button
-              onClick={() => handlePreset('90days')}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            >
-              Last 90 Days
-            </button>
+          {/* Quick Presets (Clean flat buttons) */}
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: 'today', label: 'Today' },
+              { id: '7days', label: 'Last 7 Days' },
+              { id: '14days', label: 'Last 14 Days' },
+              { id: 'thisMonth', label: 'This Month' },
+              { id: '30days', label: 'Last 30 Days' },
+              { id: '90days', label: 'Last 90 Days' },
+            ].map(p => (
+              <button
+                key={p.id}
+                onClick={() => handlePreset(p.id as any)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer border ${
+                  activePreset === p.id
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-black border-zinc-300 hover:border-black'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Top Information Banner Displaying Duration & Range */}
-        <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
+        {/* Duration Information Banner */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-black">
           <div className="flex items-center gap-2">
-            <CalendarRange className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm font-extrabold text-zinc-900 dark:text-white">
+            <CalendarRange className="h-5 w-5 text-emerald-700" />
+            <span className="text-base font-black text-black">
               From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}
             </span>
           </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-black border border-emerald-200 dark:border-emerald-800/60">
-            <span>Total Duration:</span>
-            <span className="underline">{durationDays} {durationDays === 1 ? 'Day' : 'Days'}</span>
+          <div className="text-base font-black text-black">
+            Total Duration: <span className="text-emerald-700 underline">{durationDays} {durationDays === 1 ? 'Day' : 'Days'}</span>
           </div>
         </div>
       </div>
 
-      {/* Print-Only Header Banner */}
-      <div className="hidden print:block mb-6 border-b-2 border-zinc-900 pb-4">
+      {/* Print-Only Header */}
+      <div className="hidden print:block mb-6 border-b-2 border-black pb-4 text-black">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-black text-black uppercase tracking-wide">{settings.gymName}</h1>
-            <h2 className="text-lg font-bold text-zinc-800">Attendance Summary Report</h2>
+            <h2 className="text-lg font-black text-black">Attendance Summary Report</h2>
           </div>
-          <div className="text-right text-xs text-zinc-600">
+          <div className="text-right text-xs font-bold text-black">
             <p>Generated: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between text-sm font-bold bg-zinc-100 p-2.5 rounded-lg border border-zinc-300">
+        <div className="mt-3 flex items-center justify-between text-sm font-black border-t border-b border-black py-2">
           <div>
             <span>Report Duration: </span>
-            <span className="font-extrabold text-black">From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}</span>
+            <span className="text-black">From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}</span>
           </div>
           <div>
-            <span>Total Days: </span>
-            <span className="font-extrabold text-black">{durationDays} Days</span>
+            <span>Total Duration: </span>
+            <span className="text-black">{durationDays} Days</span>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex h-[35vh] items-center justify-center text-zinc-600 dark:text-zinc-400 font-bold">
+        <div className="flex h-[35vh] items-center justify-center text-black font-black">
           <div className="flex items-center gap-3">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent" />
             <span>Compiling attendance reports for {durationDays} days...</span>
           </div>
         </div>
       ) : (
         <>
-          {/* Page 1 / Section 1: Overview Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 print-card">
-              <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
-                <span className="text-xs font-bold uppercase tracking-wider">Total Check-Ins</span>
-                <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          {/* Page 1 / Section 1: Overview Summary Cards (Flat layout, white background, no boxes) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-6 border-b border-zinc-200">
+            <div className="py-2">
+              <div className="flex items-center justify-between text-black">
+                <span className="text-xs font-black uppercase tracking-wider">Total Check-Ins</span>
+                <Users className="h-5 w-5 text-emerald-700" />
               </div>
-              <p className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white mt-2 leading-none">
+              <p className="text-3xl font-black text-black mt-2 leading-none">
                 {totalPresentCount}
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold mt-1">
+              <p className="text-xs text-black font-bold mt-1">
                 Recorded presents in selected range
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 print-card">
-              <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
-                <span className="text-xs font-bold uppercase tracking-wider">Avg Daily Attendance</span>
-                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="py-2">
+              <div className="flex items-center justify-between text-black">
+                <span className="text-xs font-black uppercase tracking-wider">Avg Daily Attendance</span>
+                <TrendingUp className="h-5 w-5 text-emerald-700" />
               </div>
-              <p className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white mt-2 leading-none">
-                {avgDailyPresence} <span className="text-sm font-bold text-zinc-500 dark:text-zinc-400">clients/day</span>
+              <p className="text-3xl font-black text-black mt-2 leading-none">
+                {avgDailyPresence} <span className="text-sm font-bold text-black">clients/day</span>
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold mt-1">
+              <p className="text-xs text-black font-bold mt-1">
                 Across {gymDays} active logged days
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 print-card sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
-                <span className="text-xs font-bold uppercase tracking-wider">Total Duration</span>
-                <Calendar className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="py-2 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center justify-between text-black">
+                <span className="text-xs font-black uppercase tracking-wider">Total Duration</span>
+                <Calendar className="h-5 w-5 text-emerald-700" />
               </div>
-              <p className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white mt-2 leading-none">
-                {durationDays} <span className="text-sm font-bold text-zinc-500 dark:text-zinc-400">days</span>
+              <p className="text-3xl font-black text-black mt-2 leading-none">
+                {durationDays} <span className="text-sm font-bold text-black">days</span>
               </p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-semibold mt-1">
+              <p className="text-xs text-black font-bold mt-1">
                 {formatDatePretty(startDate)} – {formatDatePretty(endDate)}
               </p>
             </div>
           </div>
 
-          {/* Rankings & Trends (Section 1 details) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Section 1 Details: Most Regular & Weekday Trends (Flat lists on white background) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-6 border-b border-zinc-200">
             {/* Most Regular */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 print-card">
-              <h2 className="font-extrabold text-zinc-900 dark:text-white text-base border-b border-zinc-100 pb-3 mb-4 dark:border-zinc-800 flex items-center justify-between">
+            <div>
+              <h2 className="font-black text-black text-base uppercase tracking-wider border-b border-black pb-2 mb-3 flex items-center justify-between">
                 <span>Top Regular Members</span>
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">In this period</span>
+                <span className="text-xs font-bold text-black normal-case">In this period</span>
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {mostRegular.length > 0 ? (
                   mostRegular.map((stat, idx) => (
                     <div
                       key={stat.client.id}
-                      className="flex items-center justify-between text-sm py-1 border-b border-zinc-50 dark:border-zinc-800/40 last:border-none"
+                      className="flex items-center justify-between text-sm py-1 border-b border-zinc-100 last:border-none"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 text-xs font-black text-zinc-500 dark:text-zinc-400">{idx + 1}.</span>
-                        <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                        <span className="w-5 text-xs font-black text-black">{idx + 1}.</span>
+                        <span className="font-black text-black">
                           {stat.client.name}
                         </span>
                         {stat.client.membership_number && (
-                          <span className="text-3xs font-bold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                            #{stat.client.membership_number}
+                          <span className="text-xs font-bold text-black">
+                            (#{stat.client.membership_number})
                           </span>
                         )}
                       </div>
-                      <span className="font-black text-emerald-700 dark:text-emerald-300 bg-emerald-50 px-2 py-0.5 rounded-lg dark:bg-emerald-950/60 text-xs border border-emerald-200 dark:border-emerald-800/50">
+                      <span className="font-black text-emerald-700 text-sm">
                         {stat.rate}% ({stat.present}d)
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-4">No attendance logged in this range.</p>
+                  <p className="text-xs text-black font-bold py-4">No attendance logged in this range.</p>
                 )}
               </div>
             </div>
 
             {/* Weekday Trends */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 print-card">
-              <h2 className="font-extrabold text-zinc-900 dark:text-white text-base border-b border-zinc-100 pb-3 mb-4 dark:border-zinc-800">
+            <div>
+              <h2 className="font-black text-black text-base uppercase tracking-wider border-b border-black pb-2 mb-3">
                 Weekday Attendance Trends
               </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm py-1 border-b border-zinc-100">
+                  <span className="font-bold text-black">
                     Highest Present Weekday
                   </span>
                   <div className="text-right">
-                    <span className="font-black text-emerald-700 dark:text-emerald-300 bg-emerald-50 px-2 py-0.5 rounded-lg dark:bg-emerald-950/60 text-xs border border-emerald-200 dark:border-emerald-800/50">
+                    <span className="font-black text-emerald-700 text-sm">
                       {highestWeekday.name}
                     </span>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-1">Avg: {highestWeekday.avg} present</p>
+                    <span className="text-xs font-bold text-black ml-2">(Avg: {highestWeekday.avg})</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm pt-4 border-t border-zinc-100 dark:border-zinc-800/60">
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                <div className="flex items-center justify-between text-sm py-1">
+                  <span className="font-bold text-black">
                     Lowest Present Weekday
                   </span>
                   <div className="text-right">
-                    <span className="font-black text-rose-700 dark:text-rose-300 bg-rose-50 px-2 py-0.5 rounded-lg dark:bg-rose-950/60 text-xs border border-rose-200 dark:border-rose-800/50">
+                    <span className="font-black text-rose-600 text-sm">
                       {lowestWeekday.name}
                     </span>
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mt-1">Avg: {lowestWeekday.avg} present</p>
+                    <span className="text-xs font-bold text-black ml-2">(Avg: {lowestWeekday.avg})</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Page 2 / Section 2: Detailed Client Attendance Table (Strictly 4 Columns) */}
-          <div className="rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden print:border-zinc-300 print:shadow-none print-page-break mt-6">
+          {/* Page 2 / Section 2: Detailed Client Attendance Table (Strictly 4 Columns, Pure White, Flat) */}
+          <div className="space-y-3 pt-2">
             {/* Table Controls (hidden in print) */}
-            <div className="p-4 md:p-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 no-print">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 no-print">
               <div>
-                <h2 className="text-base font-extrabold text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-black text-black uppercase tracking-wider">
                   Client Attendance Breakdown
                 </h2>
-                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs font-bold text-black">
                   Showing summary for all {filteredAndSortedStats.length} clients over {durationDays} days.
                 </p>
               </div>
 
               {/* Search */}
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search client or #..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-xl text-sm border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3 py-1.5 rounded-lg text-sm border border-zinc-300 bg-white text-black font-bold focus:outline-hidden focus:border-black"
                 />
               </div>
             </div>
 
             {/* 4-Column Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
+              <table className="w-full text-left text-sm border-collapse border-t border-b border-black">
                 <thead>
-                  <tr className="border-b border-zinc-200 bg-zinc-50/80 text-xs font-extrabold uppercase tracking-wider text-zinc-700 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-300 print:bg-zinc-100 print:text-black">
+                  <tr className="border-b-2 border-black bg-white text-xs font-black uppercase tracking-wider text-black">
                     {/* Column 1: Client Name */}
                     <th
-                      className="py-3.5 px-4 md:px-6 cursor-pointer hover:text-emerald-600 transition-colors"
+                      className="py-3 px-3 md:px-4 cursor-pointer hover:text-emerald-700 transition-colors"
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center gap-1.5">
                         <span>Client Name</span>
-                        <ArrowUpDown className="h-3.5 w-3.5 text-zinc-400 no-print" />
+                        <ArrowUpDown className="h-3.5 w-3.5 text-black no-print" />
                       </div>
                     </th>
 
                     {/* Column 2: Days Present */}
                     <th
-                      className="py-3.5 px-4 text-center cursor-pointer hover:text-emerald-600 transition-colors"
+                      className="py-3 px-3 text-center cursor-pointer hover:text-emerald-700 transition-colors"
                       onClick={() => handleSort('present')}
                     >
                       <div className="flex items-center justify-center gap-1.5">
                         <span>Days Present</span>
-                        <ArrowUpDown className="h-3.5 w-3.5 text-zinc-400 no-print" />
+                        <ArrowUpDown className="h-3.5 w-3.5 text-black no-print" />
                       </div>
                     </th>
 
                     {/* Column 3: Days Absent */}
                     <th
-                      className="py-3.5 px-4 text-center cursor-pointer hover:text-emerald-600 transition-colors"
+                      className="py-3 px-3 text-center cursor-pointer hover:text-emerald-700 transition-colors"
                       onClick={() => handleSort('absent')}
                     >
                       <div className="flex items-center justify-center gap-1.5">
                         <span>Days Absent</span>
-                        <ArrowUpDown className="h-3.5 w-3.5 text-zinc-400 no-print" />
+                        <ArrowUpDown className="h-3.5 w-3.5 text-black no-print" />
                       </div>
                     </th>
 
                     {/* Column 4: Attendance Percentage */}
                     <th
-                      className="py-3.5 px-4 md:px-6 text-right cursor-pointer hover:text-emerald-600 transition-colors"
+                      className="py-3 px-3 md:px-4 text-right cursor-pointer hover:text-emerald-700 transition-colors"
                       onClick={() => handleSort('rate')}
                     >
                       <div className="flex items-center justify-end gap-1.5">
                         <span>Attendance %</span>
-                        <ArrowUpDown className="h-3.5 w-3.5 text-zinc-400 no-print" />
+                        <ArrowUpDown className="h-3.5 w-3.5 text-black no-print" />
                       </div>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 print:divide-zinc-200">
+                <tbody className="divide-y divide-zinc-200 bg-white">
                   {filteredAndSortedStats.length > 0 ? (
                     filteredAndSortedStats.map((stat) => {
-                      const isHigh = stat.rate >= 75;
-                      const isModerate = stat.rate >= 50 && stat.rate < 75;
+                      const isHighOrMid = stat.rate >= 50;
 
                       return (
                         <tr
                           key={stat.client.id}
-                          className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
+                          className="hover:bg-zinc-50 transition-colors"
                         >
                           {/* 1. Client Name */}
-                          <td className="py-3.5 px-4 md:px-6">
+                          <td className="py-3 px-3 md:px-4">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-zinc-900 dark:text-white">
+                              <span className="font-bold text-black text-sm">
                                 {stat.client.name}
                               </span>
                               {stat.client.membership_number && (
-                                <span className="text-3xs font-extrabold px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                                <span className="text-xs font-bold text-zinc-600">
                                   #{stat.client.membership_number}
                                 </span>
                               )}
                             </div>
                           </td>
 
-                          {/* 2. Days Present */}
-                          <td className="py-3.5 px-4 text-center">
-                            <span className="inline-flex items-center justify-center min-w-[3rem] px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                          {/* 2. Days Present (GREEN) */}
+                          <td className="py-3 px-3 text-center">
+                            <span className="font-black text-emerald-700 text-sm">
                               {stat.present} d
                             </span>
                           </td>
 
-                          {/* 3. Days Absent */}
-                          <td className="py-3.5 px-4 text-center">
-                            <span className="inline-flex items-center justify-center min-w-[3rem] px-2.5 py-1 rounded-lg text-xs font-black bg-zinc-100 text-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                          {/* 3. Days Absent (RED) */}
+                          <td className="py-3 px-3 text-center">
+                            <span className="font-black text-rose-600 text-sm">
                               {stat.absent} d
                             </span>
                           </td>
 
-                          {/* 4. Attendance Percentage */}
-                          <td className="py-3.5 px-4 md:px-6 text-right">
-                            <div className="inline-flex items-center justify-end gap-2.5">
-                              {/* Progress bar (web view only) */}
-                              <div className="hidden sm:block w-20 bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden no-print">
-                                <div
-                                  className={`h-full rounded-full ${
-                                    isHigh
-                                      ? 'bg-emerald-500'
-                                      : isModerate
-                                      ? 'bg-amber-500'
-                                      : 'bg-rose-500'
-                                  }`}
-                                  style={{ width: `${stat.rate}%` }}
-                                />
-                              </div>
-                              <span
-                                className={`text-xs font-black px-2.5 py-1 rounded-lg border ${
-                                  isHigh
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/50'
-                                    : isModerate
-                                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800/50'
-                                    : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/50'
-                                }`}
-                              >
-                                {stat.rate}%
-                              </span>
-                            </div>
+                          {/* 4. Attendance Percentage (GREEN if >= 50%, RED if < 50%) */}
+                          <td className="py-3 px-3 md:px-4 text-right">
+                            <span
+                              className={`font-black text-sm ${
+                                isHighOrMid ? 'text-emerald-700' : 'text-rose-600'
+                              }`}
+                            >
+                              {stat.rate}%
+                            </span>
                           </td>
                         </tr>
                       );
@@ -678,7 +655,7 @@ export const ReportsPage: React.FC = () => {
                     <tr>
                       <td
                         colSpan={4}
-                        className="py-8 text-center text-sm font-semibold text-zinc-500 dark:text-zinc-400"
+                        className="py-8 text-center text-sm font-bold text-black"
                       >
                         No clients found matching your search.
                       </td>
@@ -689,7 +666,7 @@ export const ReportsPage: React.FC = () => {
             </div>
 
             {/* Table Footer Summary */}
-            <div className="p-3.5 bg-zinc-50 dark:bg-zinc-800/30 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-zinc-600 dark:text-zinc-400">
+            <div className="pt-2 flex items-center justify-between text-xs font-bold text-black">
               <span>Total Members Listed: {filteredAndSortedStats.length}</span>
               <span>Report Duration: {durationDays} Days</span>
             </div>
@@ -699,4 +676,5 @@ export const ReportsPage: React.FC = () => {
     </div>
   );
 };
+
 
