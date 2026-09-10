@@ -30,20 +30,20 @@ export const Sidebar: React.FC = () => {
   return (
     <>
       {/* Sticky Mobile Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-zinc-200 bg-white/90 backdrop-blur-md px-4 py-3 shadow-sm lg:hidden mobile-header dark:border-zinc-800 dark:bg-zinc-900/90 no-print">
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-zinc-200 bg-white/90 backdrop-blur-md px-4 py-2 shadow-xs lg:hidden mobile-header dark:border-zinc-800 dark:bg-zinc-900/90 no-print">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 dark:bg-emerald-500 text-white overflow-hidden shrink-0 shadow-lg shadow-emerald-500/30">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 dark:bg-emerald-500 text-white overflow-hidden shrink-0 shadow-md shadow-emerald-500/30">
             {settings.logoUrl && settings.logoUrl !== 'Dumbbell' ? (
               <img src={settings.logoUrl} alt="Logo" className="h-full w-full object-cover" />
             ) : (
-              <Dumbbell className="h-5 w-5" />
+              <Dumbbell className="h-4 w-4" />
             )}
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-zinc-800 dark:text-white text-lg tracking-tight leading-tight">
+            <span className="font-bold text-zinc-800 dark:text-white text-base tracking-tight leading-tight">
               {settings.gymName}
             </span>
-            <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">
+            <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500">
               Zen Tracker
             </span>
           </div>
@@ -51,7 +51,7 @@ export const Sidebar: React.FC = () => {
 
         <button
           onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
-          className="rounded-full bg-zinc-100 p-2 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+          className="rounded-full bg-zinc-100 p-1.5 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
           aria-label="Toggle Theme"
         >
           {currentTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -59,7 +59,7 @@ export const Sidebar: React.FC = () => {
       </header>
 
       {/* Bottom Navigation for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-zinc-200 bg-white pb-safe pt-2 px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] lg:hidden mobile-bottom-nav dark:border-zinc-800 dark:bg-zinc-900 no-print">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-zinc-200 bg-white/95 backdrop-blur-md pt-1 pb-safe px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] lg:hidden mobile-bottom-nav dark:border-zinc-800 dark:bg-zinc-900/95 no-print">
         {navItems.filter(item => !item.desktopOnly).map(item => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -67,13 +67,13 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActivePage(item.id)}
-              className={`flex flex-col items-center justify-center w-full py-1 gap-1 transition-all cursor-pointer
-                ${isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
+              className={`flex flex-col items-center justify-center py-1 px-1.5 gap-0.5 transition-all cursor-pointer rounded-xl
+                ${isActive ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
             >
-              <div className={`flex items-center justify-center rounded-xl p-1.5 transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-500/15' : ''}`}>
-                <Icon className={`h-5 w-5 md:h-6 md:w-6 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
+              <div className={`flex items-center justify-center rounded-lg p-1 transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-500/15' : ''}`}>
+                <Icon className={`h-4.5 w-4.5 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
               </div>
-              <span className={`text-[10px] font-semibold tracking-wide ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+              <span className={`text-[10px] font-semibold tracking-tight ${isActive ? 'opacity-100' : 'opacity-75'}`}>
                 {item.label}
               </span>
             </button>

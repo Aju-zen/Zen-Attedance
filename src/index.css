@@ -41,16 +41,35 @@
   }
   .mobile-header {
     display: flex !important;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+  .mobile-header span {
+    font-size: 0.8rem !important;
   }
   .mobile-bottom-nav {
     display: flex !important;
-    padding-top: 0.25rem !important;
-    padding-bottom: 0.25rem !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: max(0.15rem, env(safe-area-inset-bottom, 0px)) !important;
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+  .mobile-bottom-nav button {
+    flex-direction: row !important;
+    gap: 0.25rem !important;
+    padding: 0.1rem 0.35rem !important;
+  }
+  .mobile-bottom-nav button svg {
+    width: 0.85rem !important;
+    height: 0.85rem !important;
+  }
+  .mobile-bottom-nav button span {
+    font-size: 0.65rem !important;
   }
   .app-main-content {
-    padding-bottom: 4.5rem !important;
+    padding-bottom: 2.75rem !important;
   }
 }
 
