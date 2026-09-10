@@ -17,6 +17,7 @@ export const SettingsPage: React.FC = () => {
   const [gymLat, setGymLat] = useState(settings.gymLocationLat?.toString() || '');
   const [gymLng, setGymLng] = useState(settings.gymLocationLng?.toString() || '');
   const [gymRadius, setGymRadius] = useState(settings.gymLocationRadius?.toString() || '50');
+  const [enableTestMode, setEnableTestMode] = useState(settings.enableTestMode || false);
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
@@ -33,6 +34,7 @@ export const SettingsPage: React.FC = () => {
       gymLocationLat: gymLat ? parseFloat(gymLat) : undefined,
       gymLocationLng: gymLng ? parseFloat(gymLng) : undefined,
       gymLocationRadius: gymRadius ? parseFloat(gymRadius) : 50,
+      enableTestMode: enableTestMode,
     });
   };
 
@@ -278,6 +280,20 @@ export const SettingsPage: React.FC = () => {
                       className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800"
                     />
                   </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={enableTestMode}
+                      onChange={(e) => setEnableTestMode(e.target.checked)}
+                      className="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500 dark:ring-offset-zinc-900 focus:ring-2 bg-zinc-100 border-zinc-300 dark:bg-zinc-800 dark:border-zinc-700"
+                    />
+                    <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                      Enable Test Mode (Show Reset Test Data Button)
+                    </span>
+                  </label>
                 </div>
                 
                 <button

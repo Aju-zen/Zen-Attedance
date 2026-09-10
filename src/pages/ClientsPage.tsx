@@ -59,8 +59,8 @@ export const ClientsPage: React.FC = () => {
   // Filter clients by search query and sort by membership number
   const filteredClients = clients
     .filter(c =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.phone.includes(searchQuery) ||
+      (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.phone || '').includes(searchQuery) ||
       (c.membership_number && c.membership_number.toLowerCase().includes(searchQuery.toLowerCase()))
     )
     .sort((a, b) => {

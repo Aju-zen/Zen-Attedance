@@ -38,6 +38,7 @@ export interface GymSettings {
   gymLocationLat?: number;
   gymLocationLng?: number;
   gymLocationRadius?: number; // in meters
+  enableTestMode?: boolean; // toggle for checkin dev tool
 }
 
 export interface AppNotification {

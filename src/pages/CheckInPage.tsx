@@ -180,26 +180,27 @@ export const CheckInPage: React.FC = () => {
   };
 
   const handleClearTestData = async () => {
-    if (!window.confirm("This will delete today's attendance and device history for testing. Continue?")) return;
-    const fp = getDeviceFingerprint();
-    await db.clearTestDeviceHistory(fp);
+    if (!window.confirm("This will clear your device's fingerprint history for today so you can check in a different member for testing. Continue?")) return;
+    localStorage.removeItem('device_fingerprint');
     setErrorMessage('');
     setStep('input');
     setMembershipNumber('');
-    alert("Test data cleared! You can now check in again.");
+    alert("Device info cleared! You can now check in another member.");
   };
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-zinc-100 relative">
       
       {/* Dev Reset Button */}
-      <button 
-        onClick={handleClearTestData}
-        className="absolute top-4 right-4 bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-mono transition-colors"
-        title="Clear device history & today's attendance for testing"
-      >
-        [Dev: Reset Test Data]
-      </button>
+      {gymSettings.enableTestMode && (
+        <button 
+          onClick={handleClearTestData}
+          className="absolute top-4 right-4 bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-mono transition-colors"
+          title="Clear device history for testing"
+        >
+          [Dev: Reset Test Data]
+        </button>
+      )}
 
       <div className="bg-zinc-800 p-8 rounded-xl shadow-2xl w-full max-w-md border border-zinc-700">
         <div className="flex flex-col items-center mb-8">

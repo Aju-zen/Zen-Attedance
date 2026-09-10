@@ -57,10 +57,10 @@ export const supabaseDb: GymDB = {
         {
           membership_number: client.membership_number,
           name: client.name,
-          phone: client.phone,
+          phone: client.phone || '',
           membership_start: client.membership_start || null,
           membership_end: client.membership_end || null,
-          notes: client.notes,
+          notes: client.notes || '',
           // DB trigger checks status, but we can set default
           status: 'Active',
         },
@@ -75,19 +75,24 @@ export const supabaseDb: GymDB = {
 
     const newClient = data as Client;
 
-    // Add to membership history if dates are set
-    if (client.membership_start && client.membership_end) {
-      const start = new Date(client.membership_start);
+    // Add to membership history if end date is set
+    if (client.membership_end) {
+      const startStr = client.membership_start || new Date().toISOString().split('T')[0];
+      const start = new Date(startStr);
       const end = new Date(client.membership_end);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffTime = Math.max(0, end.getTime() - start.getTime());
       const durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      await this.addMembershipHistory({
-        client_id: newClient.id,
-        start_date: client.membership_start,
-        end_date: client.membership_end,
-        duration: durationDays,
-      });
+      try {
+        await this.addMembershipHistory({
+          client_id: newClient.id,
+          start_date: startStr,
+          end_date: client.membership_end,
+          duration: durationDays,
+        });
+      } catch (histErr) {
+        console.warn('Failed to record initial membership history:', histErr);
+      }
     }
 
     return newClient;
@@ -321,17 +326,6 @@ export const supabaseDb: GymDB = {
       .eq('device_fingerprint', deviceFingerprint);
 
     if (err1) console.error('Error clearing device checkins:', err1);
-
-    // Also delete attendance for today that matches this fingerprint
-    // to allow a full end-to-end reset for testing
-    const todayStr = new Date().toISOString().split('T')[0];
-    const { error: err2 } = await supabase
-      .from('attendance')
-      .delete()
-      .eq('device_fingerprint', deviceFingerprint)
-      .eq('date', todayStr);
-
-    if (err2) console.error('Error clearing attendance:', err2);
   },
 
   async getGlobalSettings(): Promise<Partial<GymSettings> | null> {
@@ -358,7 +352,8 @@ export const supabaseDb: GymDB = {
         theme: data.theme,
         gymLocationLat: data.gym_location_lat,
         gymLocationLng: data.gym_location_lng,
-        gymLocationRadius: data.gym_location_radius
+        gymLocationRadius: data.gym_location_radius,
+        enableTestMode: data.enable_test_mode
       };
     } catch (e: any) {
       console.error('Exception fetching global settings:', e.message);
@@ -381,6 +376,7 @@ export const supabaseDb: GymDB = {
           gym_location_lat: settings.gymLocationLat,
           gym_location_lng: settings.gymLocationLng,
           gym_location_radius: settings.gymLocationRadius,
+          enable_test_mode: settings.enableTestMode,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
 

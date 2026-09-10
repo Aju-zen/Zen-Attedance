@@ -77,8 +77,9 @@ export const AttendancePage: React.FC = () => {
   const filteredAndSortedClients = clients
     .filter(client => {
       const matchesSearch =
-        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        client.phone.includes(searchQuery);
+        (client.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (client.phone || '').includes(searchQuery) ||
+        (client.membership_number && client.membership_number.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesFilter = (() => {
         if (statusFilter === 'all') return true;
