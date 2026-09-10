@@ -5,7 +5,12 @@ import { GymSettings } from '../types';
 export const CheckInPage: React.FC = () => {
   const [step, setStep] = useState<'request_location' | 'verifying' | 'input' | 'success' | 'error'>('request_location');
   const [errorMessage, setErrorMessage] = useState('');
-  const [membershipNumber, setMembershipNumber] = useState('');
+  
+  // Auto-load remembered membership number from this device's localStorage
+  const [membershipNumber, setMembershipNumber] = useState(() => {
+    return localStorage.getItem('client_saved_membership') || '';
+  });
+  
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [successDetails, setSuccessDetails] = useState<any>(null);
@@ -38,8 +43,6 @@ export const CheckInPage: React.FC = () => {
     });
   }, []);
 
-  // Loading state moved below hooks
-
   const requestLocation = useCallback((isRetry = false) => {
     setStep('verifying');
     setErrorMessage('');
@@ -58,7 +61,6 @@ export const CheckInPage: React.FC = () => {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-        // Transition handled by the new useEffect that waits for settings to load
       },
       (error) => {
         console.error('Geolocation error:', error);
@@ -93,7 +95,6 @@ export const CheckInPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Automatically ask for location on mount (not a retry)
     requestLocation(false);
   }, [requestLocation]);
 
@@ -136,9 +137,19 @@ export const CheckInPage: React.FC = () => {
     return fp;
   };
 
+  const handleMembershipChange = (val: string) => {
+    setMembershipNumber(val);
+    // Persist on device immediately so user never has to re-enter
+    localStorage.setItem('client_saved_membership', val.trim());
+  };
+
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!membershipNumber.trim()) return;
+    const cleanNum = membershipNumber.trim();
+    if (!cleanNum) return;
+
+    // Save remembered membership number to this device's storage
+    localStorage.setItem('client_saved_membership', cleanNum);
 
     if (failCount >= 10) {
       setErrorMessage('Too many failed attempts. Please try again later.');
@@ -153,12 +164,12 @@ export const CheckInPage: React.FC = () => {
       const userAgent = navigator.userAgent;
       
       const res = await db.processSelfCheckIn({
-        membershipNumber: membershipNumber.trim(),
+        membershipNumber: cleanNum,
         deviceFingerprint: fp,
         latitude: location?.lat || 0,
         longitude: location?.lng || 0,
         browser: userAgent,
-        ipAddress: 'client-side' // Actually needs server to get true IP
+        ipAddress: 'client-side'
       });
 
       if (res.success) {
@@ -182,6 +193,7 @@ export const CheckInPage: React.FC = () => {
   const handleClearTestData = async () => {
     if (!window.confirm("This will clear your device's fingerprint history for today so you can check in a different member for testing. Continue?")) return;
     localStorage.removeItem('device_fingerprint');
+    localStorage.removeItem('client_saved_membership');
     setErrorMessage('');
     setStep('input');
     setMembershipNumber('');
@@ -245,17 +257,22 @@ export const CheckInPage: React.FC = () => {
                 id="membership"
                 type="text"
                 value={membershipNumber}
-                onChange={(e) => setMembershipNumber(e.target.value)}
+                onChange={(e) => handleMembershipChange(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-900 border border-zinc-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-zinc-500 transition-all text-center text-lg tracking-widest uppercase font-mono"
-                placeholder="____________"
+                placeholder="e.g. M-101"
                 required
                 disabled={submitting || failCount >= 10}
               />
+              {membershipNumber && (
+                <p className="text-3xs text-emerald-400/80 text-center mt-1.5 font-medium">
+                  ✓ Remembered on this device
+                </p>
+              )}
             </div>
             <button
               type="submit"
               disabled={submitting || !membershipNumber.trim() || failCount >= 10}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white font-bold py-3 px-4 rounded-lg transition-colors focus:ring-4 focus:ring-emerald-500/50 outline-none"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white font-bold py-3 px-4 rounded-lg transition-colors focus:ring-4 focus:ring-emerald-500/50 outline-none cursor-pointer"
             >
               {submitting ? 'Processing...' : 'Check In'}
             </button>
@@ -272,14 +289,13 @@ export const CheckInPage: React.FC = () => {
             <p className="text-red-400 text-center font-medium mb-6 text-lg">{errorMessage}</p>
             <button 
               onClick={() => {
-                setMembershipNumber('');
                 if (errorMessage.includes('Location') || errorMessage.includes('not inside the gym')) {
                   requestLocation(true);
                 } else {
                   setStep('input');
                 }
               }}
-              className="px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
+              className="px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors cursor-pointer"
             >
               Try Again
             </button>
