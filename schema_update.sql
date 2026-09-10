@@ -1,6 +1,6 @@
--- Update schema for Client Self Check-In
+-- Update schema for Client Self Check-In & System Settings
 
--- Create Device Check-ins Table
+-- 1. Create Device Check-ins Table
 CREATE TABLE IF NOT EXISTS device_checkins (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     device_fingerprint TEXT NOT NULL,
@@ -16,21 +16,41 @@ CREATE TABLE IF NOT EXISTS device_checkins (
 -- Index for checking device per day
 CREATE INDEX IF NOT EXISTS idx_device_checkins_fingerprint_date ON device_checkins (device_fingerprint, check_in_date);
 
--- Alter Attendance Table
+-- 2. Alter Attendance Table
 ALTER TABLE attendance ADD COLUMN IF NOT EXISTS latitude FLOAT;
 ALTER TABLE attendance ADD COLUMN IF NOT EXISTS longitude FLOAT;
 ALTER TABLE attendance ADD COLUMN IF NOT EXISTS device_fingerprint TEXT;
 
--- Create Settings Table to hold Gym Location (assuming single row)
+-- 3. Create / Update Gym Settings Table
 CREATE TABLE IF NOT EXISTS gym_settings (
     id INT PRIMARY KEY DEFAULT 1,
-    gym_latitude FLOAT DEFAULT 10.936700,
-    gym_longitude FLOAT DEFAULT 76.955857,
-    allowed_radius_meters FLOAT DEFAULT 500,
+    gym_name TEXT DEFAULT '',
+    logo_url TEXT DEFAULT '',
+    theme TEXT DEFAULT 'dark',
+    gym_location_lat FLOAT DEFAULT 10.936700,
+    gym_location_lng FLOAT DEFAULT 76.955857,
+    gym_location_radius FLOAT DEFAULT 50,
+    enable_test_mode BOOLEAN DEFAULT false,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT single_row CHECK (id = 1)
 );
 
--- Distance calculation function (Haversine)
+-- Ensure all columns exist if the table was previously created with fewer columns
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS gym_name TEXT DEFAULT '';
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS logo_url TEXT DEFAULT '';
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'dark';
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS gym_location_lat FLOAT DEFAULT 10.936700;
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS gym_location_lng FLOAT DEFAULT 76.955857;
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS gym_location_radius FLOAT DEFAULT 50;
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS enable_test_mode BOOLEAN DEFAULT false;
+ALTER TABLE gym_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Insert initial row 1 if not present
+INSERT INTO gym_settings (id, gym_name, logo_url, theme, gym_location_lat, gym_location_lng, gym_location_radius, enable_test_mode)
+VALUES (1, '', '', 'dark', 10.936700, 76.955857, 50, false)
+ON CONFLICT (id) DO NOTHING;
+
+-- 4. Distance calculation function (Haversine)
 CREATE OR REPLACE FUNCTION calculate_distance(lat1 float, lon1 float, lat2 float, lon2 float)
 RETURNS float AS $$
 DECLARE
@@ -48,7 +68,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Self Check-In RPC
+-- 5. Self Check-In RPC
 CREATE OR REPLACE FUNCTION process_self_check_in(
     p_membership_number TEXT,
     p_device_fingerprint TEXT,
@@ -146,15 +166,25 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- RLS Policies
+-- 6. Row Level Security (RLS) Policies
 ALTER TABLE device_checkins ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for anon on device_checkins" ON device_checkins;
 CREATE POLICY "Allow all for anon on device_checkins" ON device_checkins FOR ALL USING (true) WITH CHECK (true);
 
+-- Allow both READ and WRITE (INSERT/UPDATE) for anon on gym_settings
 ALTER TABLE gym_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow read for anon on gym_settings" ON gym_settings;
-CREATE POLICY "Allow read for anon on gym_settings" ON gym_settings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow all for anon on gym_settings" ON gym_settings;
+CREATE POLICY "Allow all for anon on gym_settings" ON gym_settings FOR ALL USING (true) WITH CHECK (true);
 
 ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all for anon on attendance" ON attendance;
 CREATE POLICY "Allow all for anon on attendance" ON attendance FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for anon on clients" ON clients;
+CREATE POLICY "Allow all for anon on clients" ON clients FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE membership_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all for anon on membership_history" ON membership_history;
+CREATE POLICY "Allow all for anon on membership_history" ON membership_history FOR ALL USING (true) WITH CHECK (true);
