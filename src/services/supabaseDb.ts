@@ -708,15 +708,24 @@ export const supabaseDb: GymDB = {
 
     if (clientErr) throw clientErr;
 
-    // 2. Fetch all Present attendance records
+    // 2. Fetch all Present attendance records for the CURRENT MONTH (starts on 1st day of month)
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const startOfMonth = `${year}-${month}-01`;
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+    const endOfMonth = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
     const { data: attendance, error: attErr } = await supabase
       .from('attendance')
       .select('client_id')
-      .eq('status', 'Present');
+      .eq('status', 'Present')
+      .gte('date', startOfMonth)
+      .lte('date', endOfMonth);
 
     if (attErr) throw attErr;
 
-    // Count present days per client
+    // Count present days per client in current month
     const countMap = new Map<string, number>();
     (attendance || []).forEach((a: any) => {
       countMap.set(a.client_id, (countMap.get(a.client_id) || 0) + 1);

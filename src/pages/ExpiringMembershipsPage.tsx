@@ -16,17 +16,11 @@ export const ExpiringMembershipsPage: React.FC = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Group clients - ONLY memberships expiring after 7 days
+  // Group clients - ONLY memberships expiring between 8 and 30 days
   const expiring8to30Days = clients.filter(c => {
     if (!c.membership_end || c.status === 'Expired') return false;
     const days = getDaysRemaining(c.membership_end);
     return days !== null && days > 7 && days <= 30;
-  }).sort((a, b) => a.membership_end.localeCompare(b.membership_end));
-
-  const expiring30PlusDays = clients.filter(c => {
-    if (!c.membership_end || c.status === 'Expired') return false;
-    const days = getDaysRemaining(c.membership_end);
-    return days !== null && days > 30;
   }).sort((a, b) => a.membership_end.localeCompare(b.membership_end));
 
   const renderClientRow = (client: typeof clients[0], days: number) => {
@@ -77,10 +71,10 @@ export const ExpiringMembershipsPage: React.FC = () => {
       {/* Title */}
       <div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-zinc-800 dark:text-white tracking-tight">
-          Upcoming Expiring Subscriptions (After 7 Days)
+          Upcoming Expiring Subscriptions (8 to 30 Days)
         </h1>
         <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
-          Review future memberships expiring after 7 days. Subscriptions expiring within 7 days are tracked on the Home Dashboard.
+          Review upcoming memberships expiring in the next 8 to 30 days. Subscriptions expiring within 7 days are shown on the Home Dashboard.
         </p>
       </div>
 
@@ -105,32 +99,6 @@ export const ExpiringMembershipsPage: React.FC = () => {
           ) : (
             <div className="flex flex-col items-center justify-center text-zinc-400 py-8">
               <span className="text-sm font-semibold">No upcoming expirations in the 8-30 day window.</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 30+ Days Section */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-        <div className="flex items-center gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800">
-          <Calendar className="h-5 w-5 text-emerald-500" />
-          <h2 className="font-extrabold text-zinc-800 dark:text-white text-base">
-            Expiring in 30+ Days
-          </h2>
-          <span className="ml-auto rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-            {expiring30PlusDays.length}
-          </span>
-        </div>
-
-        <div className="space-y-3">
-          {expiring30PlusDays.length > 0 ? (
-            expiring30PlusDays.map(client => {
-              const days = getDaysRemaining(client.membership_end)!;
-              return renderClientRow(client, days);
-            })
-          ) : (
-            <div className="flex flex-col items-center justify-center text-zinc-400 py-8">
-              <span className="text-sm font-semibold">No upcoming expirations after 30 days.</span>
             </div>
           )}
         </div>

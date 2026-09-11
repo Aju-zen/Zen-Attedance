@@ -262,88 +262,6 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Database Backup & Disaster Recovery Card */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-              <div>
-                <h2 className="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                  <Database className="h-4.5 w-4.5 text-emerald-500" />
-                  Database Backup & Disaster Recovery
-                </h2>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  Export all database tables to a JSON file or restore from a previous backup snapshot.
-                </p>
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 self-start sm:self-auto shrink-0">
-                100% Full DB Dump
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              {/* Export Card */}
-              <div className="flex flex-col justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 space-y-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Download className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-sm font-bold text-zinc-800 dark:text-white">Export Full Database</span>
-                  </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    Downloads an exact JSON backup containing all <strong>Clients</strong>, <strong>Attendance Records</strong>, <strong>Membership Histories</strong>, <strong>Device Check-ins</strong>, <strong>Settings</strong>, and <strong>Custom Client Order</strong>.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleExportBackup}
-                  disabled={isExporting}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
-                >
-                  {isExporting ? (
-                    <>
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                      Generating Backup...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-3.5 w-3.5" />
-                      Export Data (.json)
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Import Card */}
-              <div className="flex flex-col justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 space-y-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Upload className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                    <span className="text-sm font-bold text-zinc-800 dark:text-white">Import Database Backup</span>
-                  </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                    Upload a previously exported backup file (<code className="font-mono text-3xs bg-zinc-200 dark:bg-zinc-700 px-1 py-0.5 rounded">.json</code>) to restore your entire database or recover deleted data.
-                  </p>
-                </div>
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json,application/json"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isImporting}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    Import Backup File (.json)
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Admin Locked Section */}
           {!isAdminAuthenticated ? (
             <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-4 flex flex-col items-center text-center">
@@ -352,7 +270,7 @@ export const SettingsPage: React.FC = () => {
               </div>
               <h2 className="text-lg font-bold text-zinc-800 dark:text-white">Admin Settings Locked</h2>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                Enter the admin password to manage Gym Location.
+                Enter the admin password to access Database Backup/Export, Restore/Import, and Gym Location controls.
               </p>
               <div className="flex w-full max-w-xs items-center gap-2">
                 <input
@@ -393,6 +311,88 @@ export const SettingsPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
+              {/* Database Backup & Disaster Recovery Card (Inside Admin Settings) */}
+              <div className="rounded-2xl border border-emerald-500/30 bg-white p-5 md:p-6 shadow-sm dark:bg-zinc-900 space-y-4 relative overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                  <div>
+                    <h2 className="text-sm font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider flex items-center gap-2">
+                      <Database className="h-4.5 w-4.5" />
+                      Database Export & Import (Admin)
+                    </h2>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      Export entire database tables to a JSON backup or restore from a previous backup snapshot.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 self-start sm:self-auto shrink-0">
+                    Full DB Backup
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                  {/* Export Card */}
+                  <div className="flex flex-col justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Download className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-sm font-bold text-zinc-800 dark:text-white">Export Full Database</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                        Downloads an exact JSON backup containing all <strong>Clients</strong>, <strong>Attendance Records</strong>, <strong>Membership Histories</strong>, <strong>Device Check-ins</strong>, <strong>Settings</strong>, and <strong>Custom Client Order</strong>.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleExportBackup}
+                      disabled={isExporting}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      {isExporting ? (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          Generating Backup...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-3.5 w-3.5" />
+                          Export Data (.json)
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Import Card */}
+                  <div className="flex flex-col justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Upload className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        <span className="text-sm font-bold text-zinc-800 dark:text-white">Import Database Backup</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                        Upload a previously exported backup file (<code className="font-mono text-3xs bg-zinc-200 dark:bg-zinc-700 px-1 py-0.5 rounded">.json</code>) to restore your entire database or recover deleted data.
+                      </p>
+                    </div>
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isImporting}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                      >
+                        <Upload className="h-3.5 w-3.5" />
+                        Import Backup File (.json)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Gym Location Settings (Admin) */}
               <div className="rounded-2xl border border-emerald-500/30 bg-white p-5 md:p-6 shadow-sm dark:bg-zinc-900 space-y-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg flex items-center gap-1">

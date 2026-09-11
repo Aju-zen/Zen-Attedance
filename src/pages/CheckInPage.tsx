@@ -363,11 +363,11 @@ export const CheckInPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-amber-400 animate-bounce" />
                   <h3 className="text-base font-black uppercase tracking-wider text-white">
-                    Attendance Leaderboard
+                    {new Date().toLocaleString('en-US', { month: 'long' })} Leaderboard
                   </h3>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/30">
-                  Top Turnout
+                  Monthly Top 10
                 </span>
               </div>
 

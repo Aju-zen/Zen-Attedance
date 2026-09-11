@@ -299,10 +299,10 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
-  // Print handler that ensures document.title is "Zen Attendance" during print
+  // Print handler that ensures document.title is formatted for PDF filename
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = 'Zen Attendance';
+    document.title = `Matrx_Den_640_Attendance_Report_${startDate}_to_${endDate}`;
     window.print();
     setTimeout(() => {
       document.title = originalTitle;
@@ -317,11 +317,13 @@ export const ReportsPage: React.FC = () => {
       return;
     }
 
+    const docTitle = `Matrx_Den_640_Attendance_Report_${startDate}_to_${endDate}`;
+
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${settings.gymName || 'Zen Attendance'} - Report (${startDate} to ${endDate})</title>
+  <title>${docTitle}</title>
   <style>
     @page { size: A4 portrait; margin: 12mm 15mm; }
     body {
@@ -348,8 +350,7 @@ export const ReportsPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const sanitizedGym = (settings.gymName || 'Attendance').replace(/[^a-zA-Z0-9_-]/g, '_');
-    link.download = `${sanitizedGym}_Attendance_Report_${startDate}_to_${endDate}.html`;
+    link.download = `${docTitle}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
