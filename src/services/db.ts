@@ -15,6 +15,7 @@ export interface GymDB {
   updateClient(id: string, client: Partial<Client>): Promise<Client>;
   deleteClient(id: string): Promise<boolean>;
   deleteMockData(): Promise<{ count: number }>;
+  importInitialClients(): Promise<{ count: number }>;
 
   // Attendance
   getAttendance(date: string): Promise<Attendance[]>;

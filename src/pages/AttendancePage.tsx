@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
-import { Attendance } from '../types';
+import { Attendance, Client } from '../types';
 import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
+import { INITIAL_CUSTOM_MEMBERSHIP_ORDER } from '../data/initialClients';
 
 export const AttendancePage: React.FC = () => {
   const {
@@ -139,7 +140,23 @@ export const AttendancePage: React.FC = () => {
   const effectiveOrder = useMemo(() => {
     const clientIds = clients.map(c => c.id);
     const validSaved = customOrder.filter(id => clientIds.includes(id));
+    
+    // Sort any remaining clients according to INITIAL_CUSTOM_MEMBERSHIP_ORDER, then natural number
+    const clientMap = new Map<string, Client>();
+    clients.forEach(c => clientMap.set(c.id, c));
+
     const missing = clientIds.filter(id => !validSaved.includes(id));
+    missing.sort((idA, idB) => {
+      const memA = clientMap.get(idA)?.membership_number || '';
+      const memB = clientMap.get(idB)?.membership_number || '';
+      const idxA = INITIAL_CUSTOM_MEMBERSHIP_ORDER.indexOf(memA);
+      const idxB = INITIAL_CUSTOM_MEMBERSHIP_ORDER.indexOf(memB);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return memA.localeCompare(memB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
     return [...validSaved, ...missing];
   }, [clients, customOrder]);
 

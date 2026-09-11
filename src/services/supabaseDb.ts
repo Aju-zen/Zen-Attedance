@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup } from '../types';
 import { GymDB } from './db';
+import { INITIAL_CLIENT_DATA, INITIAL_CUSTOM_MEMBERSHIP_ORDER } from '../data/initialClients';
 
 let cachedClient: SupabaseClient | null = null;
 let cachedUrl = '';
@@ -227,6 +228,94 @@ export const supabaseDb: GymDB = {
     }
 
     return { count: mockIds.length };
+  },
+
+  async importInitialClients(): Promise<{ count: number }> {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase client not initialized');
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Build client payloads
+    const payload = INITIAL_CLIENT_DATA.map((client) => {
+      const isExpired = client.membership_end < todayStr;
+      
+      // Compute start date: 1 year prior to end date
+      const endD = new Date(client.membership_end);
+      const startD = new Date(endD);
+      startD.setFullYear(startD.getFullYear() - 1);
+      const startStr = startD.toISOString().split('T')[0];
+
+      return {
+        membership_number: client.membership_number,
+        name: client.name,
+        phone: '',
+        membership_start: startStr,
+        membership_end: client.membership_end,
+        status: isExpired ? 'Expired' : 'Active',
+        notes: '',
+      };
+    });
+
+    // Check existing clients by membership number
+    const { data: existingClients } = await supabase
+      .from('clients')
+      .select('id, membership_number');
+
+    const existingMap = new Map<string, string>();
+    (existingClients || []).forEach((c: any) => {
+      existingMap.set(c.membership_number, c.id);
+    });
+
+    // Prepare rows with IDs if already existing (upsert)
+    const rowsToUpsert = payload.map((p) => {
+      const existingId = existingMap.get(p.membership_number);
+      return existingId ? { ...p, id: existingId } : p;
+    });
+
+    // Chunk upserts in batches of 50
+    const chunkArray = <T>(arr: T[], size: number): T[][] => {
+      const chunks: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+      }
+      return chunks;
+    };
+
+    const chunks = chunkArray(rowsToUpsert, 50);
+
+    for (const chunk of chunks) {
+      const { error } = await supabase
+        .from('clients')
+        .upsert(chunk, { onConflict: 'id' });
+
+      if (error) {
+        console.error('Error upserting initial clients chunk:', error);
+        throw error;
+      }
+    }
+
+    // Re-fetch all clients to map their IDs in the EXACT custom order provided
+    const { data: allClients } = await supabase
+      .from('clients')
+      .select('id, membership_number');
+
+    if (allClients) {
+      const clientMap = new Map<string, string>();
+      allClients.forEach((c: any) => clientMap.set(c.membership_number, c.id));
+
+      const orderedIds = INITIAL_CUSTOM_MEMBERSHIP_ORDER
+        .map((num) => clientMap.get(num))
+        .filter((id): id is string => Boolean(id));
+
+      try {
+        localStorage.setItem('zen_custom_client_order', JSON.stringify(orderedIds));
+      } catch (e) {
+        console.warn('Error saving custom order:', e);
+      }
+    }
+
+    return { count: INITIAL_CLIENT_DATA.length };
   },
 
   async getAttendance(date): Promise<Attendance[]> {

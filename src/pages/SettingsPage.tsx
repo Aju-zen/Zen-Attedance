@@ -14,6 +14,7 @@ export const SettingsPage: React.FC = () => {
     exportBackup,
     parseBackupFile,
     importBackup,
+    importInitialClients,
   } = useApp();
 
   const [gymName, setGymName] = useState(settings.gymName || '');
@@ -28,11 +29,21 @@ export const SettingsPage: React.FC = () => {
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [isSeeding, setIsSeeding] = useState(false);
   const [isDeletingMock, setIsDeletingMock] = useState(false);
+  const [isImportingRoster, setIsImportingRoster] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<DatabaseBackup | null>(null);
   const [restoreMode, setRestoreMode] = useState<'replace' | 'merge'>('replace');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportRoster = async () => {
+    if (!window.confirm('Import 75 member records and set the custom list order?')) {
+      return;
+    }
+    setIsImportingRoster(true);
+    await importInitialClients();
+    setIsImportingRoster(false);
+  };
 
   // 1. Save general settings
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -473,6 +484,16 @@ export const SettingsPage: React.FC = () => {
                   >
                     <Play className="h-4 w-4 text-emerald-500" />
                     {isSeeding ? 'Writing Seed...' : 'Seed Mock Data'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleImportRoster}
+                    disabled={isImportingRoster || isSeeding || isDeletingMock}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-extrabold text-emerald-700 dark:text-emerald-300 shadow-2xs hover:bg-emerald-500/20 cursor-pointer disabled:opacity-50 transition"
+                  >
+                    <Layers className="h-4 w-4 text-emerald-500" />
+                    {isImportingRoster ? 'Importing 75 Clients...' : 'Import 75 Client Roster'}
                   </button>
 
                   <button

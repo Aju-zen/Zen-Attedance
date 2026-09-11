@@ -32,6 +32,7 @@ interface AppContextType {
   exportBackup: () => Promise<boolean>;
   parseBackupFile: (file: File) => Promise<DatabaseBackup>;
   importBackup: (backupData: DatabaseBackup, mode?: 'merge' | 'replace') => Promise<boolean>;
+  importInitialClients: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -131,7 +132,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const refreshClients = async () => {
     setLoading(true);
     try {
-      const data = await db.getClients();
+      let data = await db.getClients();
+      
+      // Auto-import the 75 clients if database has 0 clients
+      if (data.length === 0) {
+        try {
+          await db.importInitialClients();
+          data = await db.getClients();
+        } catch (initErr) {
+          console.warn('Initial clients auto-import error:', initErr);
+        }
+      }
+
       setClients(data);
 
       // Check for membership expirations and trigger warnings
@@ -439,6 +451,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const importInitialClients = async (): Promise<boolean> => {
+    try {
+      const res = await db.importInitialClients();
+      addNotification(
+        'success',
+        `Successfully imported ${res.count} clients into your database in custom order!`
+      );
+      await refreshClients();
+      return true;
+    } catch (e: any) {
+      console.error('Import initial clients error:', e);
+      addNotification('error', `Failed to import clients: ${e.message || 'Unknown error'}`);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -470,6 +498,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         exportBackup,
         parseBackupFile,
         importBackup,
+        importInitialClients,
       }}
     >
       {children}
