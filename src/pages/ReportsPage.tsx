@@ -186,7 +186,7 @@ export const ReportsPage: React.FC = () => {
     return [...clientStats]
       .filter(s => s.present > 0)
       .sort((a, b) => b.rate - a.rate || b.present - a.present)
-      .slice(0, 5);
+      .slice(0, 10);
   }, [clientStats]);
 
   // Weekday stats calculation
@@ -267,8 +267,14 @@ export const ReportsPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Print handler that ensures document.title is "Zen Attendance" during print
   const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = 'Zen Attendance';
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   };
 
   return (
@@ -445,7 +451,7 @@ export const ReportsPage: React.FC = () => {
                 </h2>
                 <div className="space-y-3">
                   {mostRegular.length > 0 ? (
-                    mostRegular.map((stat, idx) => (
+                    mostRegular.slice(0, 5).map((stat, idx) => (
                       <div key={stat.client.id} className="flex items-center justify-between text-sm py-1 border-b border-zinc-50 dark:border-zinc-800/40 last:border-none">
                         <div className="flex items-center gap-2">
                           <span className="w-5 text-xs font-bold text-zinc-400">{idx + 1}.</span>
@@ -673,117 +679,214 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. PRINT / PDF EXPORT VIEW (Pure White, No Boxes, Black/Green/Red Colors) */}
+      {/* 2. PRINT / PDF EXPORT VIEW                                                */}
+      {/* PAGE 1: Overview & Insights (Most Regular Members, Weekday Trends, etc.)   */}
+      {/* PAGE 2+: Matrx Den 640 Attendance Report (Full 4-Column Table)            */}
       {/* ========================================================================= */}
-      <div className="hidden print:block bg-white text-black font-sans p-2">
-        {/* Document Header */}
-        <div className="border-b-2 border-black pb-4 mb-5">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-black text-black uppercase tracking-wider">
-                {settings.gymName}
-              </h1>
-              <h2 className="text-base font-bold text-black mt-0.5">
-                Attendance Summary Report
-              </h2>
+      <div className="hidden print:block bg-white text-black font-sans">
+        {/* ----------------- PAGE 1: EXECUTIVE SUMMARY & INSIGHTS ----------------- */}
+        <div className="min-h-[90vh] flex flex-col justify-between pb-8">
+          <div>
+            {/* Header */}
+            <div className="border-b-2 border-black pb-4 mb-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-3xl font-black text-black uppercase tracking-wider">
+                    {settings.gymName}
+                  </h1>
+                  <h2 className="text-lg font-bold text-black mt-0.5">
+                    Executive Attendance Summary & Analytics
+                  </h2>
+                </div>
+                <div className="text-right text-xs font-bold text-black">
+                  <p>Generated: {new Date().toLocaleDateString()}</p>
+                  <p>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+              </div>
+
+              {/* Duration Banner */}
+              <div className="mt-4 pt-3 border-t border-gray-300 flex items-center justify-between text-sm font-bold text-black">
+                <div>
+                  <span>Report Duration: </span>
+                  <span className="font-black">
+                    From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}
+                  </span>
+                </div>
+                <div>
+                  <span>Total Duration: </span>
+                  <span className="font-black underline">{durationDays} {durationDays === 1 ? 'Day' : 'Days'}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-right text-xs font-bold text-black">
-              <p>Generated: {new Date().toLocaleDateString()}</p>
-              <p>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+
+            {/* Key Metrics Grid (Flat, No Boxes, Pure White) */}
+            <div className="grid grid-cols-3 gap-6 pb-6 mb-6 border-b border-gray-300">
+              <div className="border-l-2 border-black pl-3">
+                <p className="text-xs font-bold uppercase text-black">Total Check-Ins</p>
+                <p className="text-3xl font-black text-black mt-1">{totalPresentCount}</p>
+                <p className="text-3xs text-black font-semibold mt-0.5">Recorded in range</p>
+              </div>
+              <div className="border-l-2 border-black pl-3">
+                <p className="text-xs font-bold uppercase text-black">Avg Daily Attendance</p>
+                <p className="text-3xl font-black text-black mt-1">
+                  {avgDailyPresence} <span className="text-xs font-bold">clients/day</span>
+                </p>
+                <p className="text-3xs text-black font-semibold mt-0.5">Across {gymDays} logged days</p>
+              </div>
+              <div className="border-l-2 border-black pl-3">
+                <p className="text-xs font-bold uppercase text-black">Total Members</p>
+                <p className="text-3xl font-black text-black mt-1">{clientStats.length}</p>
+                <p className="text-3xs text-black font-semibold mt-0.5">Active registered clients</p>
+              </div>
+            </div>
+
+            {/* Section 1 Details: Most Regular Members & Weekday Trends */}
+            <div className="grid grid-cols-2 gap-8 mb-6">
+              {/* Most Regular Members */}
+              <div>
+                <h3 className="text-sm font-black text-black uppercase tracking-wider border-b-2 border-black pb-2 mb-3">
+                  Most Regular Members (Top Performers)
+                </h3>
+                <div className="space-y-2">
+                  {mostRegular.length > 0 ? (
+                    mostRegular.map((stat, idx) => (
+                      <div
+                        key={stat.client.id}
+                        className="flex items-center justify-between text-xs py-1 border-b border-gray-200"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-black w-4">{idx + 1}.</span>
+                          <span className="font-bold text-black">{stat.client.name}</span>
+                          {stat.client.membership_number && (
+                            <span className="text-3xs font-normal text-black">
+                              (#{stat.client.membership_number})
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-black text-emerald-700">
+                          {stat.rate}% ({stat.present} days)
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-black py-2">No attendance data logged in this range.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Weekday Trends & Analysis */}
+              <div>
+                <h3 className="text-sm font-black text-black uppercase tracking-wider border-b-2 border-black pb-2 mb-3">
+                  Weekday Attendance Patterns
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs py-1.5 border-b border-gray-200">
+                    <span className="font-bold text-black">Highest Attendance Day:</span>
+                    <span className="font-black text-emerald-700 text-sm">
+                      {highestWeekday.name} (Avg: {highestWeekday.avg})
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs py-1.5 border-b border-gray-200">
+                    <span className="font-bold text-black">Lowest Attendance Day:</span>
+                    <span className="font-black text-rose-600 text-sm">
+                      {lowestWeekday.name} (Avg: {lowestWeekday.avg})
+                    </span>
+                  </div>
+                  <div className="pt-2 text-xs font-semibold text-black leading-relaxed">
+                    This summary captures general attendance velocity, weekday turnout, and overall member consistency across the selected duration. Detailed client breakdowns follow on page 2.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-300 flex items-center justify-between text-sm font-bold text-black">
-            <div>
-              <span>Report Duration: </span>
-              <span className="font-black">
-                From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}
-              </span>
-            </div>
-            <div>
-              <span>Total Duration: </span>
-              <span className="font-black underline">{durationDays} {durationDays === 1 ? 'Day' : 'Days'}</span>
-            </div>
+          {/* Page 1 Footer */}
+          <div className="pt-3 border-t-2 border-black flex items-center justify-between text-xs font-bold text-black">
+            <span>Zen Attendance</span>
+            <span>Page 1 of 2</span>
           </div>
         </div>
 
-        {/* High-Level Overview Metrics (Flat, No Boxes) */}
-        <div className="grid grid-cols-3 gap-6 pb-5 mb-5 border-b border-gray-300">
-          <div>
-            <p className="text-xs font-bold uppercase text-black">Total Check-Ins</p>
-            <p className="text-2xl font-black text-black mt-1">{totalPresentCount}</p>
+        {/* ----------------- PAGE 2+: FULL CLIENT ATTENDANCE REPORT ----------------- */}
+        <div className="break-before-page pt-4">
+          {/* Header on Page 2 */}
+          <div className="border-b-2 border-black pb-3 mb-4">
+            <div className="flex justify-between items-end">
+              <div>
+                <h1 className="text-2xl font-black text-black uppercase tracking-wider">
+                  {settings.gymName} Attendance Report
+                </h1>
+                <p className="text-xs font-bold text-black mt-0.5">
+                  Complete Member Attendance Breakdown • From {formatDatePretty(startDate)} to {formatDatePretty(endDate)} ({durationDays} Days)
+                </p>
+              </div>
+              <div className="text-right text-xs font-bold text-black">
+                <span>Total Listed: {filteredAndSortedStats.length}</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase text-black">Avg Daily Attendance</p>
-            <p className="text-2xl font-black text-black mt-1">
-              {avgDailyPresence} <span className="text-xs font-bold">clients/day</span>
-            </p>
+
+          {/* 4-Column Table: Full width, pure white background, dark colors */}
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b-2 border-black text-xs font-black uppercase text-black">
+                <th className="py-2 px-2">Client Name</th>
+                <th className="py-2 px-2 text-center">Days Present</th>
+                <th className="py-2 px-2 text-center">Days Absent</th>
+                <th className="py-2 px-2 text-right">Attendance %</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredAndSortedStats.map((stat) => {
+                const isHighOrMid = stat.rate >= 50;
+
+                return (
+                  <tr key={stat.client.id} className="text-xs">
+                    {/* 1. Client Name (Solid Black) */}
+                    <td className="py-1.5 px-2 font-bold text-black">
+                      {stat.client.name}
+                      {stat.client.membership_number && (
+                        <span className="font-normal text-3xs text-black ml-1.5">
+                          (#{stat.client.membership_number})
+                        </span>
+                      )}
+                    </td>
+
+                    {/* 2. Days Present (Dark Green) */}
+                    <td className="py-1.5 px-2 text-center font-black text-emerald-700">
+                      {stat.present}
+                    </td>
+
+                    {/* 3. Days Absent (Dark Red) */}
+                    <td className="py-1.5 px-2 text-center font-black text-rose-600">
+                      {stat.absent}
+                    </td>
+
+                    {/* 4. Attendance Percentage (Dark Green / Dark Red) */}
+                    <td
+                      className={`py-1.5 px-2 text-right font-black ${
+                        isHighOrMid ? 'text-emerald-700' : 'text-rose-600'
+                      }`}
+                    >
+                      {stat.rate}%
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {/* Page 2 Footer */}
+          <div className="mt-8 pt-3 border-t-2 border-black flex items-center justify-between text-xs font-bold text-black">
+            <span>Zen Attendance</span>
+            <span>Page 2+ • End of Report</span>
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase text-black">Total Members</p>
-            <p className="text-2xl font-black text-black mt-1">{filteredAndSortedStats.length}</p>
-          </div>
-        </div>
-
-        {/* 4-Column Table: Flat, White Background, Black / Green / Red Text */}
-        <table className="w-full text-left text-sm border-collapse">
-          <thead>
-            <tr className="border-b-2 border-black text-xs font-black uppercase text-black">
-              <th className="py-2.5 px-2">Client Name</th>
-              <th className="py-2.5 px-2 text-center">Days Present</th>
-              <th className="py-2.5 px-2 text-center">Days Absent</th>
-              <th className="py-2.5 px-2 text-right">Attendance %</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredAndSortedStats.map((stat) => {
-              const isHighOrMid = stat.rate >= 50;
-
-              return (
-                <tr key={stat.client.id} className="text-sm">
-                  {/* 1. Client Name (Black) */}
-                  <td className="py-2 px-2 font-bold text-black">
-                    {stat.client.name}
-                    {stat.client.membership_number && (
-                      <span className="font-normal text-xs text-black ml-1.5">
-                        (#{stat.client.membership_number})
-                      </span>
-                    )}
-                  </td>
-
-                  {/* 2. Days Present (Green) */}
-                  <td className="py-2 px-2 text-center font-black text-emerald-700">
-                    {stat.present}
-                  </td>
-
-                  {/* 3. Days Absent (Red) */}
-                  <td className="py-2 px-2 text-center font-black text-rose-600">
-                    {stat.absent}
-                  </td>
-
-                  {/* 4. Attendance Percentage (Green if >=50%, Red if <50%) */}
-                  <td
-                    className={`py-2 px-2 text-right font-black ${
-                      isHighOrMid ? 'text-emerald-700' : 'text-rose-600'
-                    }`}
-                  >
-                    {stat.rate}%
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {/* Print Document Footer */}
-        <div className="mt-6 pt-3 border-t border-black flex items-center justify-between text-xs font-bold text-black">
-          <span>{settings.gymName} — Confidential Attendance Summary</span>
-          <span>Duration: {durationDays} Days | Total Clients: {filteredAndSortedStats.length}</span>
         </div>
       </div>
     </div>
   );
 };
+
 
 
 
