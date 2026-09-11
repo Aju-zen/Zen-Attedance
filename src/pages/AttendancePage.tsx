@@ -47,7 +47,20 @@ export const AttendancePage: React.FC = () => {
     return dates;
   };
 
+  // Helper: check if date string is Sunday
+  const isSunday = (dateStr: string): boolean => {
+    if (!dateStr) return false;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      return d.getDay() === 0;
+    }
+    return new Date(dateStr).getDay() === 0;
+  };
+
   const activeDates = dateMode === 'single' ? [selectedDate] : getDatesInRange(startDate, endDate);
+  const nonSundayDates = activeDates.filter(d => !isSunday(d));
+  const summaryTotalDays = nonSundayDates.length > 0 ? nonSundayDates.length : activeDates.length;
   const earliestDate = activeDates[0];
   const latestDate = activeDates[activeDates.length - 1];
 
@@ -360,20 +373,30 @@ export const AttendancePage: React.FC = () => {
                 {activeDates.map(dateStr => {
                   const header = formatDateHeader(dateStr);
                   const isToday = dateStr === todayStr;
+                  const isSun = isSunday(dateStr);
                   return (
                     <th
                       key={dateStr}
                       className={`sticky top-0 z-30 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider min-w-[80px] border-l border-zinc-200 dark:border-zinc-700/80 ${
                         isToday
                           ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                          : isSun
+                          ? 'bg-zinc-200/50 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400'
                           : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                       }`}
                     >
                       <div className="flex flex-col items-center">
-                        <span className="text-3xs text-zinc-400 dark:text-zinc-500">{header.weekday}</span>
+                        <span className={`text-3xs ${isSun ? 'text-rose-500/90 dark:text-rose-400/90 font-extrabold' : 'text-zinc-400 dark:text-zinc-500'}`}>
+                          {header.weekday}
+                        </span>
                         <span className={`text-xs ${isToday ? 'font-black text-emerald-600 dark:text-emerald-400' : 'font-bold'}`}>
                           {header.dayMonth}
                         </span>
+                        {isSun && (
+                          <span className="text-[7.5px] font-extrabold uppercase text-zinc-400 dark:text-zinc-500">
+                            Off Day
+                          </span>
+                        )}
                         {isToday && (
                           <span className="text-[8px] font-black uppercase text-emerald-600 dark:text-emerald-400">
                             Today
@@ -386,7 +409,10 @@ export const AttendancePage: React.FC = () => {
 
                 {/* Range Summary Column Header (Pinned on Right and Top) */}
                 {activeDates.length > 1 && (
-                  <th className="sticky top-0 right-0 z-40 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 min-w-[100px] shadow-[-2px_0_6px_-2px_rgba(0,0,0,0.08)] border-l border-zinc-200 dark:border-zinc-700">
+                  <th
+                    className="sticky top-0 right-0 z-40 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 min-w-[100px] shadow-[-2px_0_6px_-2px_rgba(0,0,0,0.08)] border-l border-zinc-200 dark:border-zinc-700"
+                    title="Attendance calculated for Mon–Sat operating days (Sundays excluded)"
+                  >
                     Summary
                   </th>
                 )}
@@ -399,8 +425,9 @@ export const AttendancePage: React.FC = () => {
                 filteredAndSortedClients.map(client => {
                   const isExpired = client.status === 'Expired';
                   
-                  // Compute present count in the active range
-                  const clientPresentCount = activeDates.reduce((acc, d) => {
+                  // Compute present count in the active range (excluding Sundays)
+                  const targetDates = nonSundayDates.length > 0 ? nonSundayDates : activeDates;
+                  const clientPresentCount = targetDates.reduce((acc, d) => {
                     return acc + (getStatus(client.id, d) === 'Present' ? 1 : 0);
                   }, 0);
 
@@ -467,8 +494,9 @@ export const AttendancePage: React.FC = () => {
                                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
                                 : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
                             }`}
+                            title="Attendance calculated for operating days (Sundays excluded)"
                           >
-                            {clientPresentCount} / {activeDates.length}d
+                            {clientPresentCount} / {summaryTotalDays}d
                           </span>
                         </td>
                       )}

@@ -62,13 +62,25 @@ export const ClientDetailsPage: React.FC = () => {
     );
   }
 
-  // 1. Calculations
-  const presentDays = attendanceLogs.filter(a => a.status === 'Present').length;
-  const absentDays = attendanceLogs.filter(a => a.status === 'Absent').length;
+  // Helper to check if a date is Sunday
+  const isSunday = (dateStr: string): boolean => {
+    if (!dateStr) return false;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      return d.getDay() === 0;
+    }
+    return new Date(dateStr).getDay() === 0;
+  };
+
+  // 1. Calculations (Excluding Sundays from attendance statistics)
+  const nonSundayLogs = attendanceLogs.filter(a => !isSunday(a.date));
+  const presentDays = nonSundayLogs.filter(a => a.status === 'Present').length;
+  const absentDays = nonSundayLogs.filter(a => a.status === 'Absent').length;
   const totalDays = presentDays + absentDays;
   const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
 
-  const lastVisitRecord = attendanceLogs.find(a => a.status === 'Present');
+  const lastVisitRecord = nonSundayLogs.find(a => a.status === 'Present') || attendanceLogs.find(a => a.status === 'Present');
   const lastVisitDate = lastVisitRecord ? lastVisitRecord.date : 'No record';
 
   const isExpired = client.status === 'Expired';

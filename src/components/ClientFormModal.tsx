@@ -134,7 +134,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({ isOpen, onClos
               required
               value={membershipNumber}
               onChange={e => setMembershipNumber(e.target.value)}
-              placeholder="e.g. M-101"
+              placeholder="EG : 152"
               className="w-full rounded-xl border border-zinc-200 bg-transparent px-4 py-2.5 text-sm outline-none transition duration-150 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:focus:border-emerald-500"
             />
           </div>

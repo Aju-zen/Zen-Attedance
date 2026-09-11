@@ -259,7 +259,7 @@ export const CheckInPage: React.FC = () => {
                 value={membershipNumber}
                 onChange={(e) => handleMembershipChange(e.target.value)}
                 className="w-full px-4 py-3 bg-zinc-900 border border-zinc-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-zinc-500 transition-all text-center text-lg tracking-widest uppercase font-mono"
-                placeholder="e.g. M-101"
+                placeholder="EG : 152"
                 required
                 disabled={submitting || failCount >= 10}
               />

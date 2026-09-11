@@ -99,12 +99,23 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
+  // Helper to check if a date is Sunday
+  const isSunday = (dateStr: string): boolean => {
+    if (!dateStr) return false;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      return d.getDay() === 0;
+    }
+    return new Date(dateStr).getDay() === 0;
+  };
+
   // Helper to format date strings cleanly (e.g., "Sep 4, 2026")
   const formatDatePretty = (dateStr: string) => {
     if (!dateStr) return '';
     const parts = dateStr.split('-');
     if (parts.length === 3) {
-      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
       if (!isNaN(d.getTime())) {
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       }
@@ -112,36 +123,51 @@ export const ReportsPage: React.FC = () => {
     return dateStr;
   };
 
-  // Calculate total number of calendar days in range (inclusive)
+  // Calculate total number of operating days in range (excluding Sundays, Mon-Sat = 6 days/week)
   const durationDays = useMemo(() => {
     if (!startDate || !endDate) return 1;
     const start = new Date(startDate);
     const end = new Date(endDate);
     const [s, e] = start <= end ? [start, end] : [end, start];
-    const diffTime = Math.abs(e.getTime() - s.getTime());
-    return Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    
+    let count = 0;
+    const curr = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+    const finalDate = new Date(e.getFullYear(), e.getMonth(), e.getDate());
+    
+    while (curr <= finalDate) {
+      if (curr.getDay() !== 0) { // Exclude Sunday
+        count++;
+      }
+      curr.setDate(curr.getDate() + 1);
+    }
+    return count;
   }, [startDate, endDate]);
 
-  // Aggregate stats per day
+  // Filter out any Sunday logs (ignore Sunday for attendance calculation)
+  const nonSundayLogs = useMemo(() => {
+    return reportLogs.filter(l => !isSunday(l.date));
+  }, [reportLogs]);
+
+  // Aggregate stats per day (excluding Sundays)
   const dateLogMap = useMemo(() => {
     const map = new Map<string, { present: number; total: number }>();
-    reportLogs.forEach(log => {
+    nonSundayLogs.forEach(log => {
       const entry = map.get(log.date) || { present: 0, total: 0 };
       if (log.status === 'Present') entry.present += 1;
       entry.total += 1;
       map.set(log.date, entry);
     });
     return map;
-  }, [reportLogs]);
+  }, [nonSundayLogs]);
 
   const gymDays = dateLogMap.size;
-  const totalPresentCount = reportLogs.filter(l => l.status === 'Present').length;
+  const totalPresentCount = nonSundayLogs.filter(l => l.status === 'Present').length;
   const avgDailyPresence = gymDays > 0 ? Math.round(totalPresentCount / gymDays) : 0;
 
-  // Client statistics
+  // Client statistics (calculated strictly on operating non-Sunday days)
   const clientStats: ClientReportStat[] = useMemo(() => {
     return clients.map(client => {
-      const clientLogs = reportLogs.filter(l => l.client_id === client.id);
+      const clientLogs = nonSundayLogs.filter(l => l.client_id === client.id);
       const present = clientLogs.filter(l => l.status === 'Present').length;
       const absent = Math.max(0, durationDays - present);
       const rate = durationDays > 0 ? Math.min(100, Math.round((present / durationDays) * 100)) : 0;
@@ -154,7 +180,7 @@ export const ReportsPage: React.FC = () => {
         rate,
       };
     });
-  }, [clients, reportLogs, durationDays]);
+  }, [clients, nonSundayLogs, durationDays]);
 
   // Filtered and Sorted stats for table
   const filteredAndSortedStats = useMemo(() => {
@@ -189,13 +215,14 @@ export const ReportsPage: React.FC = () => {
       .slice(0, 10);
   }, [clientStats]);
 
-  // Weekday stats calculation
+  // Weekday stats calculation (Monday through Saturday)
   const weekdayStats = useMemo(() => {
     const map = new Map<number, { present: number; count: number }>();
     for (const [dateStr, stats] of dateLogMap.entries()) {
       const parts = dateStr.split('-');
       if (parts.length === 3) {
-        const dayOfWeek = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay();
+        const dayOfWeek = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)).getDay();
+        if (dayOfWeek === 0) continue; // Exclude Sunday
         const current = map.get(dayOfWeek) || { present: 0, count: 0 };
         current.present += stats.present;
         current.count += 1;
@@ -243,7 +270,7 @@ export const ReportsPage: React.FC = () => {
     let csvContent = '\uFEFF'; // UTF-8 BOM
     csvContent += `"${settings.gymName} - Attendance Report"\r\n`;
     csvContent += `"Date Range","From ${formatDatePretty(startDate)} to ${formatDatePretty(endDate)}"\r\n`;
-    csvContent += `"Total Duration","${durationDays} Days"\r\n`;
+    csvContent += `"Total Duration","${durationDays} Operating Days (Excl. Sundays)"\r\n`;
     csvContent += `"Generated On","${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}"\r\n\r\n`;
     csvContent += 'Client Name,Days Present,Days Absent,Attendance Rate (%)\r\n';
 
@@ -385,7 +412,7 @@ export const ReportsPage: React.FC = () => {
             </div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-500/20">
               <span>Total Duration:</span>
-              <span className="font-extrabold">{durationDays} {durationDays === 1 ? 'Day' : 'Days'}</span>
+              <span className="font-extrabold">{durationDays} {durationDays === 1 ? 'Day' : 'Days'} (Excl. Sundays)</span>
             </div>
           </div>
         </div>
@@ -429,14 +456,14 @@ export const ReportsPage: React.FC = () => {
 
               <div className="rounded-2xl border border-zinc-200 bg-white p-4.5 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900 sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center justify-between text-zinc-400">
-                  <span className="text-xs font-bold uppercase tracking-wider">Duration Days</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">Operating Days</span>
                   <Calendar className="h-4.5 w-4.5 text-emerald-500" />
                 </div>
                 <p className="text-2xl md:text-3xl font-black text-zinc-800 dark:text-white mt-2 leading-none">
                   {durationDays} <span className="text-sm font-bold text-zinc-400">days</span>
                 </p>
                 <p className="text-3xs text-zinc-400 dark:text-zinc-500 font-semibold mt-1">
-                  {formatDatePretty(startDate)} – {formatDatePretty(endDate)}
+                  Mon – Sat (Sundays excluded)
                 </p>
               </div>
             </div>
@@ -718,7 +745,7 @@ export const ReportsPage: React.FC = () => {
                 <div>
                   <span>Total Duration: </span>
                   <span style={{ fontWeight: 900, color: '#000000', textDecoration: 'underline' }}>
-                    {durationDays} {durationDays === 1 ? 'Day' : 'Days'}
+                    {durationDays} {durationDays === 1 ? 'Day' : 'Days'} (Excl. Sundays)
                   </span>
                 </div>
               </div>
@@ -844,7 +871,7 @@ export const ReportsPage: React.FC = () => {
                   {settings.gymName} Attendance Report
                 </h1>
                 <p style={{ fontSize: '11px', fontWeight: 700, color: '#1e293b', marginTop: '2px', margin: 0 }}>
-                  Complete Member Attendance Breakdown • From {formatDatePretty(startDate)} to {formatDatePretty(endDate)} ({durationDays} Days)
+                  Complete Member Attendance Breakdown • From {formatDatePretty(startDate)} to {formatDatePretty(endDate)} ({durationDays} Operating Days, Excl. Sundays)
                 </p>
               </div>
               <div style={{ textAlign: 'right', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>
