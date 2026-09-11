@@ -57,12 +57,37 @@ export const ClientsPage: React.FC = () => {
   };
 
   // Filter clients by search query and sort by membership number
+  const rawQ = searchQuery.trim().toLowerCase();
+  const cleanQ = rawQ.replace(/^[#\s]+/, '');
+  const alphaQ = rawQ.replace(/[^a-z0-9]/g, '');
+  const digitsQ = rawQ.replace(/\D/g, '');
+
   const filteredClients = clients
-    .filter(c =>
-      (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.phone || '').includes(searchQuery) ||
-      (c.membership_number && c.membership_number.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
+    .filter(c => {
+      if (!rawQ) return true;
+      const name = (c.name || '').toLowerCase();
+      const phone = (c.phone || '').toLowerCase();
+      const mem = (c.membership_number ? String(c.membership_number) : '').toLowerCase();
+
+      if (name.includes(rawQ) || phone.includes(rawQ) || mem.includes(rawQ)) {
+        return true;
+      }
+      if (cleanQ && (mem.includes(cleanQ) || name.includes(cleanQ))) {
+        return true;
+      }
+      const alphaMem = mem.replace(/[^a-z0-9]/g, '');
+      if (alphaQ && alphaMem && (alphaMem.includes(alphaQ) || alphaQ.includes(alphaMem))) {
+        return true;
+      }
+      const digitsMem = mem.replace(/\D/g, '');
+      if (digitsQ && digitsMem) {
+        if (digitsMem.includes(digitsQ) || digitsMem.endsWith(digitsQ)) return true;
+        const numMem = parseInt(digitsMem, 10);
+        const numQ = parseInt(digitsQ, 10);
+        if (!isNaN(numMem) && !isNaN(numQ) && numMem === numQ) return true;
+      }
+      return false;
+    })
     .sort((a, b) => {
       const memA = a.membership_number || '';
       const memB = b.membership_number || '';

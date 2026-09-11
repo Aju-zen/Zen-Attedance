@@ -166,12 +166,47 @@ export const AttendancePage: React.FC = () => {
 
   // Filter and Sort clients
   const filteredAndSortedClients = useMemo(() => {
+    const rawQ = searchQuery.trim().toLowerCase();
+    const cleanQ = rawQ.replace(/^[#\s]+/, '');
+    const alphaQ = rawQ.replace(/[^a-z0-9]/g, '');
+    const digitsQ = rawQ.replace(/\D/g, '');
+
     return clients
       .filter(client => {
-        const matchesSearch =
-          (client.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (client.phone || '').includes(searchQuery) ||
-          (client.membership_number && client.membership_number.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesSearch = (() => {
+          if (!rawQ) return true;
+
+          const name = (client.name || '').toLowerCase();
+          const phone = (client.phone || '').toLowerCase();
+          const mem = (client.membership_number ? String(client.membership_number) : '').toLowerCase();
+
+          // 1. Direct substring match on name, phone, or membership #
+          if (name.includes(rawQ) || phone.includes(rawQ) || mem.includes(rawQ)) {
+            return true;
+          }
+
+          // 2. Match without leading '#' or symbols
+          if (cleanQ && (mem.includes(cleanQ) || name.includes(cleanQ))) {
+            return true;
+          }
+
+          // 3. Normalized alphanumeric match (e.g. '001', 'MD001', 'MD-001')
+          const alphaMem = mem.replace(/[^a-z0-9]/g, '');
+          if (alphaQ && alphaMem && (alphaMem.includes(alphaQ) || alphaQ.includes(alphaMem))) {
+            return true;
+          }
+
+          // 4. Numeric match (e.g. searching '1' for '001' or 'MD-001')
+          const digitsMem = mem.replace(/\D/g, '');
+          if (digitsQ && digitsMem) {
+            if (digitsMem.includes(digitsQ) || digitsMem.endsWith(digitsQ)) return true;
+            const numMem = parseInt(digitsMem, 10);
+            const numQ = parseInt(digitsQ, 10);
+            if (!isNaN(numMem) && !isNaN(numQ) && numMem === numQ) return true;
+          }
+
+          return false;
+        })();
 
         const matchesFilter = (() => {
           if (statusFilter === 'custom' || statusFilter === 'all') return true;

@@ -197,13 +197,34 @@ export const ReportsPage: React.FC = () => {
 
   // Filtered and Sorted stats for table
   const filteredAndSortedStats = useMemo(() => {
+    const rawQ = searchQuery.trim().toLowerCase();
+    const cleanQ = rawQ.replace(/^[#\s]+/, '');
+    const alphaQ = rawQ.replace(/[^a-z0-9]/g, '');
+    const digitsQ = rawQ.replace(/\D/g, '');
+
     return clientStats
       .filter(s => {
-        const query = searchQuery.toLowerCase().trim();
-        if (!query) return true;
-        const nameMatch = (s.client.name || '').toLowerCase().includes(query);
-        const memMatch = (s.client.membership_number || '').toLowerCase().includes(query);
-        return nameMatch || memMatch;
+        if (!rawQ) return true;
+        const name = (s.client.name || '').toLowerCase();
+        const mem = (s.client.membership_number ? String(s.client.membership_number) : '').toLowerCase();
+
+        if (name.includes(rawQ) || mem.includes(rawQ)) return true;
+        if (cleanQ && (mem.includes(cleanQ) || name.includes(cleanQ))) return true;
+
+        const alphaMem = mem.replace(/[^a-z0-9]/g, '');
+        if (alphaQ && alphaMem && (alphaMem.includes(alphaQ) || alphaQ.includes(alphaMem))) {
+          return true;
+        }
+
+        const digitsMem = mem.replace(/\D/g, '');
+        if (digitsQ && digitsMem) {
+          if (digitsMem.includes(digitsQ) || digitsMem.endsWith(digitsQ)) return true;
+          const numMem = parseInt(digitsMem, 10);
+          const numQ = parseInt(digitsQ, 10);
+          if (!isNaN(numMem) && !isNaN(numQ) && numMem === numQ) return true;
+        }
+
+        return false;
       })
       .sort((a, b) => {
         let diff = 0;
