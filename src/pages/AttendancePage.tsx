@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { Attendance } from '../types';
-import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone, Menu, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 
 export const AttendancePage: React.FC = () => {
@@ -34,8 +34,6 @@ export const AttendancePage: React.FC = () => {
       return [];
     }
   });
-  const [draggedClientId, setDraggedClientId] = useState<string | null>(null);
-  const [dragOverClientId, setDragOverClientId] = useState<string | null>(null);
 
   const [rangeAttendance, setRangeAttendance] = useState<Attendance[]>([]);
   const [loadingRange, setLoadingRange] = useState(false);
@@ -145,26 +143,7 @@ export const AttendancePage: React.FC = () => {
     return [...validSaved, ...missing];
   }, [clients, customOrder]);
 
-  // Handle Drag & Drop reordering
-  const handleReorder = (sourceId: string, targetId: string) => {
-    if (sourceId === targetId) return;
-    const order = [...effectiveOrder];
-    const sourceIndex = order.indexOf(sourceId);
-    const targetIndex = order.indexOf(targetId);
-    if (sourceIndex === -1 || targetIndex === -1) return;
-
-    order.splice(sourceIndex, 1);
-    order.splice(targetIndex, 0, sourceId);
-
-    setCustomOrder(order);
-    try {
-      localStorage.setItem('zen_custom_client_order', JSON.stringify(order));
-    } catch (e) {
-      console.error('Error saving custom client order:', e);
-    }
-  };
-
-  // Move client 1 step up or down (ideal for mobile one-tap reordering)
+  // Move client 1 step up or down (ideal for one-tap reordering)
   const moveClient = (clientId: string, direction: 'up' | 'down') => {
     const order = [...effectiveOrder];
     const index = order.indexOf(clientId);
@@ -183,36 +162,6 @@ export const AttendancePage: React.FC = () => {
     } catch (e) {
       console.error('Error saving custom client order:', e);
     }
-  };
-
-  // Touch Drag-and-Drop for Mobile
-  const touchSourceRef = useRef<string | null>(null);
-
-  const handleTouchStart = (clientId: string) => {
-    touchSourceRef.current = clientId;
-    setDraggedClientId(clientId);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchSourceRef.current) return;
-    const touch = e.touches[0];
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    const rowEl = el?.closest('[data-client-id]');
-    if (rowEl) {
-      const targetId = rowEl.getAttribute('data-client-id');
-      if (targetId && targetId !== touchSourceRef.current) {
-        setDragOverClientId(targetId);
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (touchSourceRef.current && dragOverClientId && touchSourceRef.current !== dragOverClientId) {
-      handleReorder(touchSourceRef.current, dragOverClientId);
-    }
-    touchSourceRef.current = null;
-    setDraggedClientId(null);
-    setDragOverClientId(null);
   };
 
   // Filter and Sort clients
@@ -501,7 +450,7 @@ export const AttendancePage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Menu className="h-3 w-3 text-emerald-500" />
+                  <ArrowUpDown className="h-3 w-3 text-emerald-500" />
                   Edit Order
                 </>
               )}
@@ -528,26 +477,6 @@ export const AttendancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Reorder Guidance Banner */}
-      {isEditingOrder && statusFilter === 'custom' && (
-        <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-semibold shrink-0 animate-in fade-in slide-in-from-top-1">
-          <div className="flex items-center gap-2">
-            <Menu className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-            <span>
-              <strong>Reorder Mode Active:</strong> Drag <strong>(☰)</strong> or tap <strong>(▲ / ▼)</strong> next to any member to rearrange.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsEditingOrder(false)}
-            className="px-3 py-1 rounded-lg bg-amber-600 text-white font-bold hover:bg-amber-500 transition text-xs shrink-0 shadow-xs cursor-pointer flex items-center gap-1"
-          >
-            <Check className="h-3 w-3" />
-            Done
-          </button>
-        </div>
-      )}
-
       {/* 3. Attendance Logs Table (with Freeze Panes: Fixed Header, Fixed Name Column, Fixed Summary Column) */}
       <div className="flex-1 min-h-0 rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto relative">
@@ -556,14 +485,9 @@ export const AttendancePage: React.FC = () => {
             <thead className="bg-zinc-100 dark:bg-zinc-800/95 sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-700">
               <tr>
                 {/* Top-Left Corner Header Cell (Pinned on Left and Top) */}
-                <th className="sticky top-0 left-0 z-40 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 min-w-[220px] max-w-[280px] shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-200 dark:border-zinc-700">
+                <th className="sticky top-0 left-0 z-40 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 min-w-[220px] max-w-[290px] shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-200 dark:border-zinc-700">
                   <div className="flex items-center justify-between">
                     <span>Client Info</span>
-                    {isEditingOrder && statusFilter === 'custom' && (
-                      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold lowercase">
-                        (drag ☰ to sort)
-                      </span>
-                    )}
                   </div>
                 </th>
                 
@@ -622,8 +546,6 @@ export const AttendancePage: React.FC = () => {
               {filteredAndSortedClients.length > 0 ? (
                 filteredAndSortedClients.map(client => {
                   const isExpired = client.status === 'Expired';
-                  const isBeingDragged = draggedClientId === client.id;
-                  const isDragTarget = dragOverClientId === client.id;
                   
                   // Compute present count in the active range (excluding Sundays)
                   const targetDates = nonSundayDates.length > 0 ? nonSundayDates : activeDates;
@@ -634,83 +556,32 @@ export const AttendancePage: React.FC = () => {
                   return (
                     <tr
                       key={client.id}
-                      data-client-id={client.id}
-                      draggable={isEditingOrder && statusFilter === 'custom'}
-                      onDragStart={(e) => {
-                        if (isEditingOrder && statusFilter === 'custom') {
-                          setDraggedClientId(client.id);
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData('text/plain', client.id);
-                        }
-                      }}
-                      onDragOver={(e) => {
-                        if (isEditingOrder && statusFilter === 'custom') {
-                          e.preventDefault();
-                          if (draggedClientId && draggedClientId !== client.id && dragOverClientId !== client.id) {
-                            setDragOverClientId(client.id);
-                          }
-                        }
-                      }}
-                      onDragLeave={() => {
-                        if (dragOverClientId === client.id) {
-                          setDragOverClientId(null);
-                        }
-                      }}
-                      onDrop={(e) => {
-                        if (isEditingOrder && statusFilter === 'custom') {
-                          e.preventDefault();
-                          if (draggedClientId && draggedClientId !== client.id) {
-                            handleReorder(draggedClientId, client.id);
-                          }
-                          setDraggedClientId(null);
-                          setDragOverClientId(null);
-                        }
-                      }}
-                      onDragEnd={() => {
-                        setDraggedClientId(null);
-                        setDragOverClientId(null);
-                      }}
-                      className={`transition-colors ${
-                        isBeingDragged
-                          ? 'opacity-40 bg-zinc-200/60 dark:bg-zinc-800/60'
-                          : isDragTarget
-                          ? 'border-t-2 border-amber-500 bg-amber-500/10'
-                          : 'hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30'
-                      }`}
+                      className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30 transition-colors"
                     >
                       {/* Left Frozen Column: Membership Number & Name in Same Line */}
                       <td className="sticky left-0 z-20 bg-white dark:bg-zinc-900 px-3 sm:px-4 py-2.5 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-100 dark:border-zinc-800 min-w-[220px] max-w-[290px]">
                         <div className="flex items-center gap-2 overflow-hidden">
-                          {/* 3-line icon handle & Up/Down buttons when in Edit Order mode */}
+                          {/* Large Side-by-Side Up & Down Buttons when in Edit Order mode */}
                           {isEditingOrder && statusFilter === 'custom' && (
-                            <div className="flex items-center gap-1 shrink-0">
-                              <div
-                                onTouchStart={() => handleTouchStart(client.id)}
-                                onTouchMove={handleTouchMove}
-                                onTouchEnd={handleTouchEnd}
-                                className="flex items-center justify-center p-1.5 rounded-lg text-amber-700 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 active:bg-amber-500/35 cursor-grab active:cursor-grabbing touch-none select-none"
-                                title="Click/touch and drag to reorder member"
+                            <div className="flex items-center gap-1 shrink-0 mr-1">
+                              <button
+                                type="button"
+                                onClick={() => moveClient(client.id, 'up')}
+                                className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/30 active:scale-90 border border-amber-500/30 transition cursor-pointer shadow-2xs"
+                                title="Move up"
+                                aria-label="Move up"
                               >
-                                <Menu className="h-4 w-4 stroke-[2.5]" />
-                              </div>
-                              <div className="flex flex-col -space-y-0.5">
-                                <button
-                                  type="button"
-                                  onClick={() => moveClient(client.id, 'up')}
-                                  className="p-0.5 rounded text-zinc-400 hover:text-amber-600 hover:bg-amber-500/15 dark:hover:text-amber-400 dark:hover:bg-zinc-800 transition active:scale-90 cursor-pointer"
-                                  title="Move up"
-                                >
-                                  <ChevronUp className="h-3.5 w-3.5 stroke-[2.5]" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => moveClient(client.id, 'down')}
-                                  className="p-0.5 rounded text-zinc-400 hover:text-amber-600 hover:bg-amber-500/15 dark:hover:text-amber-400 dark:hover:bg-zinc-800 transition active:scale-90 cursor-pointer"
-                                  title="Move down"
-                                >
-                                  <ChevronDown className="h-3.5 w-3.5 stroke-[2.5]" />
-                                </button>
-                              </div>
+                                <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 stroke-[3]" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveClient(client.id, 'down')}
+                                className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/30 active:scale-90 border border-amber-500/30 transition cursor-pointer shadow-2xs"
+                                title="Move down"
+                                aria-label="Move down"
+                              >
+                                <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 stroke-[3]" />
+                              </button>
                             </div>
                           )}
                           <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-500/15 px-2 py-0.5 rounded-md shrink-0">
