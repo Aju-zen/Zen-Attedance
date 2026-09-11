@@ -425,9 +425,23 @@ export const CheckInPage: React.FC = () => {
             <h1 className="text-3xl font-extrabold text-center tracking-tight text-white mb-0.5">
               {gymSettings.gymName}
             </h1>
-            <span className="text-xs font-semibold text-zinc-400 mb-6">
+            <span className="text-xs font-semibold text-zinc-400 mb-3">
               Zen Tracker
             </span>
+
+            {/* View Leaderboard Button directly above Self Check-In text */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowLeaderboardView(true);
+                fetchLeaderboard();
+              }}
+              className="inline-flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/40 hover:bg-amber-500/25 active:scale-98 text-amber-300 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer mb-3"
+            >
+              <Trophy className="h-3.5 w-3.5 text-amber-400 animate-bounce" />
+              <span>View Leaderboard</span>
+            </button>
+
             <h2 className="text-xl font-bold text-center text-emerald-400 mb-1">Self Check-In</h2>
             <p className="text-zinc-400 text-sm">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
