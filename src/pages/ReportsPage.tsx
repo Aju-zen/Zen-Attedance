@@ -17,6 +17,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
+import { generateAndDownloadAttendancePdf } from '../utils/generateAttendancePdf';
 
 interface ClientReportStat {
   client: Client;
@@ -323,62 +324,43 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
   // Print handler that ensures document.title is formatted for PDF filename
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = `Matrx_Den_640_Attendance_Report_${startDate}_to_${endDate}`;
+    const gymClean = (settings.gymName || 'Matrx_Den_640').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+    document.title = `${gymClean}_Attendance_Report_${startDate}_to_${endDate}`;
     window.print();
     setTimeout(() => {
       document.title = originalTitle;
     }, 1000);
   };
 
-  // Direct Browser Download Handler (Generates standalone downloadable HTML file directly to Browser Downloads)
+  // Direct Browser PDF Download Handler (Instantly downloads .pdf file directly to Browser Downloads)
   const handleDownloadReport = () => {
-    const reportElem = document.querySelector('.print-report-container');
-    if (!reportElem) {
+    setIsDownloadingPdf(true);
+    try {
+      generateAndDownloadAttendancePdf({
+        gymName: settings.gymName || 'Matrx Den 640',
+        startDate,
+        endDate,
+        durationDays,
+        totalPresentCount,
+        avgDailyPresence,
+        clientStats: filteredAndSortedStats,
+        mostRegular,
+        highestWeekday,
+        lowestWeekday,
+        gymDays,
+      });
+    } catch (err) {
+      console.error('Error generating PDF download:', err);
+      // Fallback: print to PDF if canvas/blob generation fails
       handlePrint();
-      return;
+    } finally {
+      setIsDownloadingPdf(false);
     }
-
-    const docTitle = `Matrx_Den_640_Attendance_Report_${startDate}_to_${endDate}`;
-
-    const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>${docTitle}</title>
-  <style>
-    @page { size: A4 portrait; margin: 12mm 15mm; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 24px;
-      color: #0f172a;
-      background: #ffffff;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    @media print {
-      body { padding: 0; }
-    }
-  </style>
-</head>
-<body>
-  ${reportElem.innerHTML}
-</body>
-</html>`;
-
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${docTitle}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -414,11 +396,12 @@ export const ReportsPage: React.FC = () => {
             </button>
             <button
               onClick={handleDownloadReport}
-              className="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer transition-colors"
-              title="Download standalone report file to your computer"
+              disabled={isDownloadingPdf}
+              className="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer transition-colors disabled:opacity-50"
+              title="Download PDF report directly into your browser downloads folder"
             >
               <Download className="h-4.5 w-4.5" />
-              Download Report
+              {isDownloadingPdf ? 'Downloading PDF...' : 'Download Report PDF'}
             </button>
             <button
               onClick={handlePrint}
@@ -944,7 +927,7 @@ export const ReportsPage: React.FC = () => {
       {/* 2. COMPLETELY NEW PDF / PRINT DOCUMENT (PURE WHITE, TEXT-ONLY, NO BOXES)  */}
       {/* ========================================================================= */}
       <div
-        className="hidden print:block font-sans print-root"
+        className="print-report-container hidden print:block font-sans print-root"
         style={{ backgroundColor: '#ffffff', color: '#000000', margin: 0, padding: 0 }}
       >
         {/* ===================================================================== */}
