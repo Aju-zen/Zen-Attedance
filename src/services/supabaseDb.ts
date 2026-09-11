@@ -176,6 +176,59 @@ export const supabaseDb: GymDB = {
     return true;
   },
 
+  async deleteMockData(): Promise<{ count: number }> {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase client not initialized');
+
+    const mockNames = [
+      'Alex Mercer', 'Sarah Connor', 'Bruce Wayne', 'Diana Prince',
+      'Peter Parker', 'Tony Stark', 'Clark Kent', 'Steve Rogers'
+    ];
+
+    // Find all clients that match mock criteria
+    const { data: byNotes } = await supabase
+      .from('clients')
+      .select('id, name')
+      .ilike('notes', '%mock%');
+
+    const { data: byNames } = await supabase
+      .from('clients')
+      .select('id, name')
+      .in('name', mockNames);
+
+    const { data: byNum } = await supabase
+      .from('clients')
+      .select('id, name')
+      .ilike('membership_number', 'MOCK%');
+
+    // Collect unique mock client IDs
+    const mockClientsMap = new Map<string, string>();
+    (byNotes || []).forEach(c => mockClientsMap.set(c.id, c.name));
+    (byNames || []).forEach(c => mockClientsMap.set(c.id, c.name));
+    (byNum || []).forEach(c => mockClientsMap.set(c.id, c.name));
+
+    const mockIds = Array.from(mockClientsMap.keys());
+
+    if (mockIds.length === 0) {
+      return { count: 0 };
+    }
+
+    // Delete attendance records for these mock clients
+    await supabase.from('attendance').delete().in('client_id', mockIds);
+
+    // Delete membership history for these mock clients
+    await supabase.from('membership_history').delete().in('client_id', mockIds);
+
+    // Delete the clients
+    const { error: delError } = await supabase.from('clients').delete().in('id', mockIds);
+    if (delError) {
+      console.error('Supabase deleteMockData error:', delError);
+      throw delError;
+    }
+
+    return { count: mockIds.length };
+  },
+
   async getAttendance(date): Promise<Attendance[]> {
     const supabase = getSupabaseClient();
     if (!supabase) throw new Error('Supabase client not initialized');

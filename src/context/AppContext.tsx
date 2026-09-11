@@ -28,6 +28,7 @@ interface AppContextType {
   removeClient: (id: string) => Promise<void>;
   testConnection: (url: string, key: string) => Promise<boolean>;
   seedSupabase: () => Promise<boolean>;
+  deleteMockData: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -267,6 +268,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const offsets = [-25, -60, -90, -10, -5, -30, -4, -15];
         const endOffsets = [5, 30, -2, 80, 25, 0, 2, 15];
         return {
+          membership_number: `MOCK-${1001 + i}`,
           name,
           phone: `+1 (555) 100-200${i}`,
           membership_start: getRelativeDateStr(offsets[i]),
@@ -336,6 +338,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const deleteMockData = async (): Promise<boolean> => {
+    try {
+      const res = await db.deleteMockData();
+      if (res.count === 0) {
+        addNotification('info', 'No mock data found in database.');
+      } else {
+        addNotification('success', `Deleted ${res.count} mock client(s) and their associated records.`);
+      }
+      await refreshClients();
+      return true;
+    } catch (e: any) {
+      console.error(e);
+      addNotification('error', `Failed to delete mock data: ${e.message}`);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -363,6 +382,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeClient,
         testConnection,
         seedSupabase,
+        deleteMockData,
       }}
     >
       {children}

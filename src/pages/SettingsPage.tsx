@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Settings, Save, MapPin, ShieldCheck, Lock, Unlock, Play } from 'lucide-react';
+import { Settings, Save, MapPin, ShieldCheck, Lock, Unlock, Play, Trash2 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const {
@@ -8,6 +8,7 @@ export const SettingsPage: React.FC = () => {
     updateSettings,
     addNotification,
     seedSupabase,
+    deleteMockData,
     refreshClients,
   } = useApp();
 
@@ -22,6 +23,7 @@ export const SettingsPage: React.FC = () => {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isDeletingMock, setIsDeletingMock] = useState(false);
 
   // 1. Save general settings
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -47,6 +49,21 @@ export const SettingsPage: React.FC = () => {
     setIsSeeding(true);
     const success = await seedSupabase();
     setIsSeeding(false);
+
+    if (success) {
+      refreshClients();
+    }
+  };
+
+  // 3. Delete Mock Data from Supabase
+  const handleDeleteMockData = async () => {
+    if (!window.confirm('Are you sure you want to delete all mock data from your database? This will permanently remove seeded mock clients and their attendance logs.')) {
+      return;
+    }
+
+    setIsDeletingMock(true);
+    const success = await deleteMockData();
+    setIsDeletingMock(false);
 
     if (success) {
       refreshClients();
@@ -321,18 +338,29 @@ export const SettingsPage: React.FC = () => {
                   Set to My Current Location
                 </button>
                 
-                {/* Seed button */}
+                {/* Seed and Delete Mock Data buttons */}
                 <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-emerald-500/20">
                   <button
                     type="button"
                     onClick={handleSeedSupabase}
-                    disabled={isSeeding}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-extrabold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
+                    disabled={isSeeding || isDeletingMock}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-extrabold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer disabled:opacity-50 transition"
                   >
-                    <Play className="h-4 w-4 text-emerald-500 animate-pulse" />
+                    <Play className="h-4 w-4 text-emerald-500" />
                     {isSeeding ? 'Writing Seed...' : 'Seed Mock Data'}
                   </button>
-                  <p className="text-xs text-zinc-400">Inserts mock clients for testing purposes.</p>
+
+                  <button
+                    type="button"
+                    onClick={handleDeleteMockData}
+                    disabled={isSeeding || isDeletingMock}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/50 px-4 py-2.5 text-xs font-extrabold text-rose-600 shadow-2xs hover:bg-rose-100 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400 dark:hover:bg-rose-950/50 cursor-pointer disabled:opacity-50 transition"
+                  >
+                    <Trash2 className="h-4 w-4 text-rose-500" />
+                    {isDeletingMock ? 'Deleting Mock Data...' : 'Delete Mock Data'}
+                  </button>
+
+                  <p className="text-xs text-zinc-400">Seed sample records or remove all mock testing data.</p>
                 </div>
               </div>
             </div>
