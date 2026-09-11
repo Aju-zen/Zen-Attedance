@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { Attendance } from '../types';
-import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2 } from 'lucide-react';
+import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 
 export const AttendancePage: React.FC = () => {
@@ -335,6 +335,17 @@ export const AttendancePage: React.FC = () => {
             >
               Expired
             </button>
+            <button
+              onClick={() => setStatusFilter('self_check_in')}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer shrink-0 flex items-center gap-1 ${
+                statusFilter === 'self_check_in'
+                  ? 'bg-indigo-600 text-white dark:bg-indigo-500 shadow-xs'
+                  : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <Smartphone className="h-3 w-3" />
+              Self Check-In
+            </button>
           </div>
         </div>
 
@@ -452,7 +463,9 @@ export const AttendancePage: React.FC = () => {
 
                       {/* Middle Scrollable Date Status Toggle Cells */}
                       {activeDates.map(dateStr => {
-                        const status = getStatus(client.id, dateStr);
+                        const record = getAttendanceRecord(client.id, dateStr);
+                        const status = record ? record.status : 'Absent';
+                        const isSelfCheckIn = Boolean(record?.device_fingerprint && record?.status === 'Present');
                         const isToday = dateStr === todayStr;
 
                         return (
@@ -467,17 +480,24 @@ export const AttendancePage: React.FC = () => {
                                 type="button"
                                 disabled={isExpired}
                                 onClick={() => handleToggle(client.id, dateStr, status)}
-                                className={`flex h-8 w-8 items-center justify-center rounded-xl border transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
+                                className={`relative flex h-8 w-8 items-center justify-center rounded-xl border transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
                                   status === 'Present'
-                                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs shadow-emerald-500/30'
+                                    ? isSelfCheckIn
+                                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs shadow-indigo-500/30'
+                                      : 'bg-emerald-500 border-emerald-500 text-white shadow-xs shadow-emerald-500/30'
                                     : 'bg-rose-500 border-rose-500 text-white shadow-xs shadow-rose-500/30'
                                 }`}
-                                title={status === 'Present' ? 'Mark Absent' : 'Mark Present'}
+                                title={status === 'Present' ? (isSelfCheckIn ? 'Self Checked-In via device (Click to toggle)' : 'Mark Absent') : 'Mark Present'}
                               >
                                 {status === 'Present' ? (
                                   <Check className="h-4 w-4 stroke-[3]" />
                                 ) : (
                                   <X className="h-4 w-4 stroke-[3]" />
+                                )}
+                                {isSelfCheckIn && (
+                                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-indigo-950 border border-white text-[8px] text-white shadow-xs" title="Self Checked-in via mobile">
+                                    📱
+                                  </span>
                                 )}
                               </button>
                             </div>
@@ -509,7 +529,15 @@ export const AttendancePage: React.FC = () => {
                     colSpan={activeDates.length + (activeDates.length > 1 ? 2 : 1)}
                     className="px-6 py-12 text-center text-zinc-400 dark:text-zinc-500 font-medium"
                   >
-                    {searchQuery ? 'No matching clients found.' : 'No clients registered.'}
+                    {searchQuery
+                      ? 'No matching clients found.'
+                      : statusFilter === 'self_check_in'
+                      ? 'No self check-in members found for this date/range.'
+                      : statusFilter === 'active'
+                      ? 'No active clients found.'
+                      : statusFilter === 'expired'
+                      ? 'No expired clients found.'
+                      : 'No clients registered.'}
                   </td>
                 </tr>
               )}
