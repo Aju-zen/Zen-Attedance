@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Users, UserCheck, UserX, AlertTriangle, XCircle, ChevronRight } from 'lucide-react';
+import { Users, UserCheck, Smartphone, AlertTriangle, ChevronRight } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { clients, attendance, setActivePage } = useApp();
@@ -12,7 +12,9 @@ export const Dashboard: React.FC = () => {
   const sevenDaysFromNowStr = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   const presentToday = attendance.filter(a => a.status === 'Present' && a.date === todayStr).length;
-  const absentToday = attendance.filter(a => a.status === 'Absent' && a.date === todayStr).length;
+  const selfCheckInToday = attendance.filter(
+    a => a.status === 'Present' && a.date === todayStr && Boolean(a.device_fingerprint)
+  ).length;
 
   const expiringThisWeek = clients.filter(c => {
     if (!c.membership_end || c.status === 'Expired') return false;
@@ -35,10 +37,10 @@ export const Dashboard: React.FC = () => {
       action: () => setActivePage('attendance'),
     },
     {
-      title: 'Absent Today',
-      value: absentToday,
-      icon: UserX,
-      color: 'bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-500/10 dark:border-rose-500/15 dark:text-rose-400',
+      title: 'Self Check-In Today',
+      value: selfCheckInToday,
+      icon: Smartphone,
+      color: 'bg-indigo-50 border-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-500/15 dark:text-indigo-400',
       action: () => setActivePage('attendance'),
     },
     {
@@ -50,13 +52,13 @@ export const Dashboard: React.FC = () => {
     },
   ];
 
-  // Expiring memberships list for quick dashboard viewing
+  // Expiring memberships list for quick dashboard viewing (full list of expiring in 7 days)
   const quickExpiring = clients
     .filter(c => {
       if (!c.membership_end) return false;
       return c.membership_end >= todayStr && c.membership_end <= sevenDaysFromNowStr;
     })
-    .slice(0, 5); // Show top 5 instead of 3 since it has more space now
+    .sort((a, b) => a.membership_end.localeCompare(b.membership_end));
 
   return (
     <div className="space-y-6 md:space-y-8 max-w-7xl mx-auto px-4 md:px-6 py-6">

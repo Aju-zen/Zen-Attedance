@@ -5,6 +5,7 @@ import { Attendance, Client } from '../types';
 import {
   BarChart3,
   Printer,
+  Download,
   Users,
   TrendingUp,
   Calendar,
@@ -308,6 +309,53 @@ export const ReportsPage: React.FC = () => {
     }, 1000);
   };
 
+  // Direct Browser Download Handler (Generates standalone downloadable HTML file directly to Browser Downloads)
+  const handleDownloadReport = () => {
+    const reportElem = document.querySelector('.print-report-container');
+    if (!reportElem) {
+      handlePrint();
+      return;
+    }
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${settings.gymName || 'Zen Attendance'} - Report (${startDate} to ${endDate})</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm 15mm; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      color: #0f172a;
+      background: #ffffff;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    @media print {
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  ${reportElem.innerHTML}
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const sanitizedGym = (settings.gymName || 'Attendance').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `${sanitizedGym}_Attendance_Report_${startDate}_to_${endDate}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 md:px-6 py-6 text-zinc-900 dark:text-zinc-100">
       {/* ========================================================================= */}
@@ -329,11 +377,20 @@ export const ReportsPage: React.FC = () => {
           {/* Action buttons */}
           <div className="flex items-center gap-2.5">
             <button
+              onClick={handleDownloadReport}
+              className="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer transition-colors"
+              title="Download standalone report file to your computer"
+            >
+              <Download className="h-4.5 w-4.5" />
+              Download Report
+            </button>
+            <button
               onClick={handlePrint}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4.5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 cursor-pointer transition-colors"
+              title="Print or Save as PDF"
             >
               <Printer className="h-4.5 w-4.5" />
-              Print / PDF
+              Print / Save PDF
             </button>
           </div>
         </div>
