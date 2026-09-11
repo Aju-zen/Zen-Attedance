@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { Attendance } from '../types';
-import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone } from 'lucide-react';
+import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone, Menu, ArrowUpDown } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 
 export const AttendancePage: React.FC = () => {
@@ -23,7 +23,20 @@ export const AttendancePage: React.FC = () => {
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'self_check_in'>('all');
+  // 1. Custom order is default category, followed by all, active, expired, self_check_in
+  const [statusFilter, setStatusFilter] = useState<'custom' | 'all' | 'active' | 'expired' | 'self_check_in'>('custom');
+  const [isEditingOrder, setIsEditingOrder] = useState(false);
+  const [customOrder, setCustomOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('zen_custom_client_order');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [draggedClientId, setDraggedClientId] = useState<string | null>(null);
+  const [dragOverClientId, setDragOverClientId] = useState<string | null>(null);
+
   const [rangeAttendance, setRangeAttendance] = useState<Attendance[]>([]);
   const [loadingRange, setLoadingRange] = useState(false);
 
@@ -124,33 +137,69 @@ export const AttendancePage: React.FC = () => {
     setEndDate(end.toISOString().split('T')[0]);
   };
 
+  // Compute effective custom order with all current clients
+  const effectiveOrder = useMemo(() => {
+    const clientIds = clients.map(c => c.id);
+    const validSaved = customOrder.filter(id => clientIds.includes(id));
+    const missing = clientIds.filter(id => !validSaved.includes(id));
+    return [...validSaved, ...missing];
+  }, [clients, customOrder]);
+
+  // Handle Drag & Drop reordering
+  const handleReorder = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+    const order = [...effectiveOrder];
+    const sourceIndex = order.indexOf(sourceId);
+    const targetIndex = order.indexOf(targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    order.splice(sourceIndex, 1);
+    order.splice(targetIndex, 0, sourceId);
+
+    setCustomOrder(order);
+    try {
+      localStorage.setItem('zen_custom_client_order', JSON.stringify(order));
+    } catch (e) {
+      console.error('Error saving custom client order:', e);
+    }
+  };
+
   // Filter and Sort clients
-  const filteredAndSortedClients = clients
-    .filter(client => {
-      const matchesSearch =
-        (client.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (client.phone || '').includes(searchQuery) ||
-        (client.membership_number && client.membership_number.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredAndSortedClients = useMemo(() => {
+    return clients
+      .filter(client => {
+        const matchesSearch =
+          (client.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (client.phone || '').includes(searchQuery) ||
+          (client.membership_number && client.membership_number.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesFilter = (() => {
-        if (statusFilter === 'all') return true;
-        if (statusFilter === 'active') return client.status === 'Active';
-        if (statusFilter === 'expired') return client.status === 'Expired';
-        if (statusFilter === 'self_check_in') {
-          return rangeAttendance.some(
-            a => a.client_id === client.id && activeDates.includes(a.date) && a.status === 'Present' && a.device_fingerprint
-          );
+        const matchesFilter = (() => {
+          if (statusFilter === 'custom' || statusFilter === 'all') return true;
+          if (statusFilter === 'active') return client.status === 'Active';
+          if (statusFilter === 'expired') return client.status === 'Expired';
+          if (statusFilter === 'self_check_in') {
+            return rangeAttendance.some(
+              a => a.client_id === client.id && activeDates.includes(a.date) && a.status === 'Present' && a.device_fingerprint
+            );
+          }
+          return true;
+        })();
+
+        return matchesSearch && matchesFilter;
+      })
+      .sort((a, b) => {
+        if (statusFilter === 'custom') {
+          const idxA = effectiveOrder.indexOf(a.id);
+          const idxB = effectiveOrder.indexOf(b.id);
+          const posA = idxA === -1 ? 999999 : idxA;
+          const posB = idxB === -1 ? 999999 : idxB;
+          return posA - posB;
         }
-        return true;
-      })();
-
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      const memA = a.membership_number || '';
-      const memB = b.membership_number || '';
-      return memA.localeCompare(memB, undefined, { numeric: true, sensitivity: 'base' });
-    });
+        const memA = a.membership_number || '';
+        const memB = b.membership_number || '';
+        return memA.localeCompare(memB, undefined, { numeric: true, sensitivity: 'base' });
+      });
+  }, [clients, searchQuery, statusFilter, rangeAttendance, activeDates, effectiveOrder]);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -305,38 +354,69 @@ export const AttendancePage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1 overflow-x-auto pb-0.5 shrink-0">
+            {/* 1. Custom Order (First & Default) */}
             <button
-              onClick={() => setStatusFilter('all')}
+              onClick={() => setStatusFilter('custom')}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer shrink-0 ${
+                statusFilter === 'custom'
+                  ? 'bg-emerald-600 text-white dark:bg-emerald-500 shadow-xs'
+                  : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
+              }`}
+            >
+              Custom
+            </button>
+
+            {/* 2. All (Second) */}
+            <button
+              onClick={() => {
+                setStatusFilter('all');
+                setIsEditingOrder(false);
+              }}
               className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer shrink-0 ${
                 statusFilter === 'all'
-                  ? 'bg-emerald-600 text-white dark:bg-emerald-500'
+                  ? 'bg-emerald-600 text-white dark:bg-emerald-500 shadow-xs'
                   : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
               }`}
             >
               All
             </button>
+
+            {/* 3. Active */}
             <button
-              onClick={() => setStatusFilter('active')}
+              onClick={() => {
+                setStatusFilter('active');
+                setIsEditingOrder(false);
+              }}
               className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer shrink-0 ${
                 statusFilter === 'active'
-                  ? 'bg-emerald-600 text-white dark:bg-emerald-500'
+                  ? 'bg-emerald-600 text-white dark:bg-emerald-500 shadow-xs'
                   : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
               }`}
             >
               Active
             </button>
+
+            {/* 4. Expired */}
             <button
-              onClick={() => setStatusFilter('expired')}
+              onClick={() => {
+                setStatusFilter('expired');
+                setIsEditingOrder(false);
+              }}
               className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer shrink-0 ${
                 statusFilter === 'expired'
-                  ? 'bg-rose-600 text-white dark:bg-rose-500'
+                  ? 'bg-rose-600 text-white dark:bg-rose-500 shadow-xs'
                   : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800'
               }`}
             >
               Expired
             </button>
+
+            {/* 5. Self Check-In */}
             <button
-              onClick={() => setStatusFilter('self_check_in')}
+              onClick={() => {
+                setStatusFilter('self_check_in');
+                setIsEditingOrder(false);
+              }}
               className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer shrink-0 flex items-center gap-1 ${
                 statusFilter === 'self_check_in'
                   ? 'bg-indigo-600 text-white dark:bg-indigo-500 shadow-xs'
@@ -345,6 +425,34 @@ export const AttendancePage: React.FC = () => {
             >
               <Smartphone className="h-3 w-3" />
               Self Check-In
+            </button>
+
+            {/* Edit Custom Order Toggle */}
+            <button
+              onClick={() => {
+                if (statusFilter !== 'custom') {
+                  setStatusFilter('custom');
+                }
+                setIsEditingOrder(prev => !prev);
+              }}
+              className={`ml-1 rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                isEditingOrder
+                  ? 'bg-amber-600 text-white shadow-xs animate-pulse'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700'
+              }`}
+              title={isEditingOrder ? 'Finish reordering' : 'Click to rearrange custom member order'}
+            >
+              {isEditingOrder ? (
+                <>
+                  <Check className="h-3 w-3" />
+                  Done
+                </>
+              ) : (
+                <>
+                  <Menu className="h-3 w-3 text-emerald-500" />
+                  Edit Order
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -368,6 +476,26 @@ export const AttendancePage: React.FC = () => {
         )}
       </div>
 
+      {/* Reorder Guidance Banner */}
+      {isEditingOrder && statusFilter === 'custom' && (
+        <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-semibold shrink-0 animate-in fade-in slide-in-from-top-1">
+          <div className="flex items-center gap-2">
+            <Menu className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span>
+              <strong>Reorder Mode Active:</strong> Drag and drop any client row using the <strong>3-line icon (☰)</strong> next to their name to rearrange order.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditingOrder(false)}
+            className="px-3 py-1 rounded-lg bg-amber-600 text-white font-bold hover:bg-amber-500 transition text-xs shrink-0 shadow-xs cursor-pointer flex items-center gap-1"
+          >
+            <Check className="h-3 w-3" />
+            Done
+          </button>
+        </div>
+      )}
+
       {/* 3. Attendance Logs Table (with Freeze Panes: Fixed Header, Fixed Name Column, Fixed Summary Column) */}
       <div className="flex-1 min-h-0 rounded-2xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto relative">
@@ -377,7 +505,14 @@ export const AttendancePage: React.FC = () => {
               <tr>
                 {/* Top-Left Corner Header Cell (Pinned on Left and Top) */}
                 <th className="sticky top-0 left-0 z-40 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 min-w-[220px] max-w-[280px] shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-200 dark:border-zinc-700">
-                  Client Info
+                  <div className="flex items-center justify-between">
+                    <span>Client Info</span>
+                    {isEditingOrder && statusFilter === 'custom' && (
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold lowercase">
+                        (drag ☰ to sort)
+                      </span>
+                    )}
+                  </div>
                 </th>
                 
                 {/* Date Header Columns (Scroll Horizontally, Sticky on Top) */}
@@ -435,6 +570,8 @@ export const AttendancePage: React.FC = () => {
               {filteredAndSortedClients.length > 0 ? (
                 filteredAndSortedClients.map(client => {
                   const isExpired = client.status === 'Expired';
+                  const isBeingDragged = draggedClientId === client.id;
+                  const isDragTarget = dragOverClientId === client.id;
                   
                   // Compute present count in the active range (excluding Sundays)
                   const targetDates = nonSundayDates.length > 0 ? nonSundayDates : activeDates;
@@ -443,10 +580,63 @@ export const AttendancePage: React.FC = () => {
                   }, 0);
 
                   return (
-                    <tr key={client.id} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30 transition-colors">
+                    <tr
+                      key={client.id}
+                      draggable={isEditingOrder && statusFilter === 'custom'}
+                      onDragStart={(e) => {
+                        if (isEditingOrder && statusFilter === 'custom') {
+                          setDraggedClientId(client.id);
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', client.id);
+                        }
+                      }}
+                      onDragOver={(e) => {
+                        if (isEditingOrder && statusFilter === 'custom') {
+                          e.preventDefault();
+                          if (draggedClientId && draggedClientId !== client.id && dragOverClientId !== client.id) {
+                            setDragOverClientId(client.id);
+                          }
+                        }
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverClientId === client.id) {
+                          setDragOverClientId(null);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        if (isEditingOrder && statusFilter === 'custom') {
+                          e.preventDefault();
+                          if (draggedClientId && draggedClientId !== client.id) {
+                            handleReorder(draggedClientId, client.id);
+                          }
+                          setDraggedClientId(null);
+                          setDragOverClientId(null);
+                        }
+                      }}
+                      onDragEnd={() => {
+                        setDraggedClientId(null);
+                        setDragOverClientId(null);
+                      }}
+                      className={`transition-colors ${
+                        isBeingDragged
+                          ? 'opacity-40 bg-zinc-200/60 dark:bg-zinc-800/60'
+                          : isDragTarget
+                          ? 'border-t-2 border-amber-500 bg-amber-500/10'
+                          : 'hover:bg-zinc-50/70 dark:hover:bg-zinc-800/30'
+                      }`}
+                    >
                       {/* Left Frozen Column: Membership Number & Name in Same Line */}
                       <td className="sticky left-0 z-20 bg-white dark:bg-zinc-900 px-4 py-2.5 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-100 dark:border-zinc-800 min-w-[220px] max-w-[280px]">
                         <div className="flex items-center gap-2 overflow-hidden">
+                          {/* 3-line icon handle when in Edit Order mode */}
+                          {isEditingOrder && statusFilter === 'custom' && (
+                            <div
+                              className="flex items-center justify-center p-1 rounded-md text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 cursor-grab active:cursor-grabbing shrink-0"
+                              title="Click and drag to reorder member"
+                            >
+                              <Menu className="h-3.5 w-3.5 stroke-[2.5]" />
+                            </div>
+                          )}
                           <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-500/15 px-2 py-0.5 rounded-md shrink-0">
                             {client.membership_number || 'No #'}
                           </span>
