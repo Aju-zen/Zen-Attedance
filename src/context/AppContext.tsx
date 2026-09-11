@@ -147,6 +147,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setClients(data);
 
+      // Check if attendance is initialized, if empty auto-seed the September 1-9 attendance
+      try {
+        const todayAttendance = await db.getAttendanceRange('2026-09-01', '2026-09-09');
+        const presentCount = todayAttendance.filter(a => a.status === 'Present').length;
+        if (presentCount === 0 && data.length > 0) {
+          await db.importSeptemberAttendance();
+        }
+      } catch (attCheckErr) {
+        console.warn('Initial attendance sync check:', attCheckErr);
+      }
+
       // Check for membership expirations and trigger warnings
       const todayStr = new Date().toISOString().split('T')[0];
       const threeDaysStr = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

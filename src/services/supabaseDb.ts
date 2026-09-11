@@ -338,7 +338,10 @@ export const supabaseDb: GymDB = {
 
     const clientMap = new Map<string, string>();
     (allClients || []).forEach((c: any) => {
-      clientMap.set(c.membership_number, c.id);
+      const cleanNum = String(c.membership_number || '').trim();
+      if (cleanNum) {
+        clientMap.set(cleanNum, c.id);
+      }
     });
 
     const dates = [
@@ -356,7 +359,8 @@ export const supabaseDb: GymDB = {
     // Build map of (membership_number -> Set of Present dates)
     const presentMap = new Map<string, Set<string>>();
     INITIAL_SEPTEMBER_ATTENDANCE.forEach((rec) => {
-      presentMap.set(rec.membership_number, new Set(rec.dates));
+      const cleanNum = String(rec.membership_number || '').trim();
+      presentMap.set(cleanNum, new Set(rec.dates));
     });
 
     const attendanceRows: any[] = [];
