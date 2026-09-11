@@ -17,11 +17,16 @@ export const AttendancePage: React.FC = () => {
   const [dateMode, setDateMode] = useState<'single' | 'range'>('single');
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [startDate, setStartDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 6);
-    return d.toISOString().split('T')[0];
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-01`;
   });
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   // 1. Custom order is default category, followed by all, active, expired, self_check_in
@@ -41,7 +46,11 @@ export const AttendancePage: React.FC = () => {
 
   // Helper: compute list of dates between start and end (inclusive, max 60 days)
   const getDatesInRange = (startStr: string, endStr: string): string[] => {
-    if (!startStr || !endStr) return [startStr || endStr || new Date().toISOString().split('T')[0]];
+    if (!startStr || !endStr) {
+      const now = new Date();
+      const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      return [startStr || endStr || fallback];
+    }
     const start = new Date(startStr);
     const end = new Date(endStr);
     
@@ -52,7 +61,10 @@ export const AttendancePage: React.FC = () => {
     const curr = new Date(actualStart);
     let count = 0;
     while (curr <= actualEnd && count < 60) {
-      dates.push(curr.toISOString().split('T')[0]);
+      const y = curr.getFullYear();
+      const m = String(curr.getMonth() + 1).padStart(2, '0');
+      const d = String(curr.getDate()).padStart(2, '0');
+      dates.push(`${y}-${m}-${d}`);
       curr.setDate(curr.getDate() + 1);
       count++;
     }
@@ -140,12 +152,27 @@ export const AttendancePage: React.FC = () => {
   };
 
   // Quick Range Presets
+  const formatLocalDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   const setPreset = (daysBack: number) => {
     const end = new Date();
     const start = new Date();
     start.setDate(end.getDate() - (daysBack - 1));
-    setStartDate(start.toISOString().split('T')[0]);
-    setEndDate(end.toISOString().split('T')[0]);
+    setStartDate(formatLocalDate(start));
+    setEndDate(formatLocalDate(end));
+  };
+
+  const setThisMonth = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    setStartDate(`${year}-${month}-01`);
+    setEndDate(formatLocalDate(now));
   };
 
   // Compute effective custom order with all current clients
@@ -369,6 +396,13 @@ export const AttendancePage: React.FC = () => {
           {/* Date Range Quick Presets (Normal mode only) */}
           {dateMode === 'range' && (
             <div className="flex flex-wrap items-center gap-1.5 bg-emerald-500/5 dark:bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20 shrink-0">
+              <button
+                type="button"
+                onClick={setThisMonth}
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer shadow-2xs"
+              >
+                This Month
+              </button>
               <button
                 type="button"
                 onClick={() => setPreset(3)}

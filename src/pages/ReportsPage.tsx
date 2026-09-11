@@ -32,14 +32,19 @@ export const ReportsPage: React.FC = () => {
   const [reportLogs, setReportLogs] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Date Range state
+  // Date Range state (defaults to 1st of current month to present day)
   const [startDate, setStartDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 29); // Default to last 30 days
-    return d.toISOString().split('T')[0];
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-01`;
   });
-  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [activePreset, setActivePreset] = useState<string>('30days');
+  const [endDate, setEndDate] = useState(() => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  });
+  const [activePreset, setActivePreset] = useState<string>('thisMonth');
 
   // Table search and sort
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,7 +97,13 @@ export const ReportsPage: React.FC = () => {
   const handlePreset = (type: 'today' | '7days' | '14days' | 'thisMonth' | '30days' | '90days') => {
     setActivePreset(type);
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const formatLocal = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const todayStr = formatLocal(today);
 
     if (type === 'today') {
       setStartDate(todayStr);
@@ -100,26 +111,27 @@ export const ReportsPage: React.FC = () => {
     } else if (type === '7days') {
       const d = new Date();
       d.setDate(today.getDate() - 6);
-      setStartDate(d.toISOString().split('T')[0]);
+      setStartDate(formatLocal(d));
       setEndDate(todayStr);
     } else if (type === '14days') {
       const d = new Date();
       d.setDate(today.getDate() - 13);
-      setStartDate(d.toISOString().split('T')[0]);
+      setStartDate(formatLocal(d));
       setEndDate(todayStr);
     } else if (type === 'thisMonth') {
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      setStartDate(startOfMonth.toISOString().split('T')[0]);
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      setStartDate(`${year}-${month}-01`);
       setEndDate(todayStr);
     } else if (type === '30days') {
       const d = new Date();
       d.setDate(today.getDate() - 29);
-      setStartDate(d.toISOString().split('T')[0]);
+      setStartDate(formatLocal(d));
       setEndDate(todayStr);
     } else if (type === '90days') {
       const d = new Date();
       d.setDate(today.getDate() - 89);
-      setStartDate(d.toISOString().split('T')[0]);
+      setStartDate(formatLocal(d));
       setEndDate(todayStr);
     }
   };
