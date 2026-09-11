@@ -123,6 +123,19 @@ export const ReportsPage: React.FC = () => {
     return dateStr;
   };
 
+  // Helper to format date strings as DD/MM/YYYY (e.g., "10/08/2026")
+  const formatDateDMY = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parts[1].padStart(2, '0');
+      const day = parts[2].padStart(2, '0');
+      return `${day}/${month}/${year}`;
+    }
+    return dateStr;
+  };
+
   // Calculate total number of operating days in range (excluding Sundays, Mon-Sat = 6 days/week)
   const durationDays = useMemo(() => {
     if (!startDate || !endDate) return 1;
@@ -737,15 +750,15 @@ export const ReportsPage: React.FC = () => {
               {/* Duration Banner (Text-only line) */}
               <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #94a3b8', display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
                 <div>
-                  <span>Report Duration: </span>
+                  <span>Date: </span>
                   <span style={{ fontWeight: 900, color: '#000000' }}>
-                    From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}
+                    {formatDateDMY(startDate)} to {formatDateDMY(endDate)}
                   </span>
                 </div>
                 <div>
-                  <span>Total Duration: </span>
+                  <span>Total Operating Days: </span>
                   <span style={{ fontWeight: 900, color: '#000000', textDecoration: 'underline' }}>
-                    {durationDays} {durationDays === 1 ? 'Day' : 'Days'} (Excl. Sundays)
+                    {durationDays}
                   </span>
                 </div>
               </div>
@@ -865,18 +878,12 @@ export const ReportsPage: React.FC = () => {
         <div style={{ breakBefore: 'page', pageBreakBefore: 'always', paddingTop: '16px' }}>
           {/* Header on Page 2 */}
           <div style={{ borderBottom: '2.5px solid #0f172a', paddingBottom: '10px', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <div>
-                <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
-                  {settings.gymName} Attendance Report
-                </h1>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: '#1e293b', marginTop: '2px', margin: 0 }}>
-                  Complete Member Attendance Breakdown • From {formatDatePretty(startDate)} to {formatDatePretty(endDate)} ({durationDays} Operating Days, Excl. Sundays)
-                </p>
-              </div>
-              <div style={{ textAlign: 'right', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>
-                <span>Total Listed: {filteredAndSortedStats.length}</span>
-              </div>
+            <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+              {settings.gymName} Attendance Report
+            </h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>
+              <span>Date: {formatDateDMY(startDate)} to {formatDateDMY(endDate)}</span>
+              <span>Total Operating Days: {durationDays}</span>
             </div>
           </div>
 
