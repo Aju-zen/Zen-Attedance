@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
-import { Attendance, Client } from '../types';
+import { Attendance, Client, LeaderboardEntry } from '../types';
 import {
   BarChart3,
   Printer,
@@ -12,6 +12,9 @@ import {
   CalendarRange,
   Search,
   ArrowUpDown,
+  Trophy,
+  X,
+  Flame,
 } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 
@@ -41,6 +44,27 @@ export const ReportsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'present' | 'absent' | 'rate'>('present');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Full Leaderboard Modal State (with search filter)
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<{
+    top10: LeaderboardEntry[];
+    allRanked: LeaderboardEntry[];
+  }>({ top10: [], allRanked: [] });
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [leaderboardSearch, setLeaderboardSearch] = useState('');
+
+  const loadLeaderboard = async () => {
+    setLoadingLeaderboard(true);
+    try {
+      const data = await db.getLeaderboard();
+      setLeaderboardData(data);
+    } catch (e) {
+      console.error('Error fetching leaderboard in reports:', e);
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  };
 
   // Load logs for the selected date range
   useEffect(() => {
@@ -376,7 +400,18 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => {
+                setShowLeaderboardModal(true);
+                loadLeaderboard();
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-2.5 text-sm font-bold text-amber-700 dark:text-amber-400 shadow-2xs hover:bg-amber-500/20 cursor-pointer transition-colors"
+              title="View full monthly member attendance leaderboard"
+            >
+              <Trophy className="h-4.5 w-4.5 text-amber-500" />
+              View Leaderboard
+            </button>
             <button
               onClick={handleDownloadReport}
               className="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer transition-colors"
@@ -395,6 +430,151 @@ export const ReportsPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* ========================================================================= */}
+        {/* FULL LEADERBOARD MODAL (Admin Reports with Live Search)                   */}
+        {/* ========================================================================= */}
+        {showLeaderboardModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in">
+            <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-500 border border-amber-500/20">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                      Monthly Attendance Leaderboard
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                        {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                      </span>
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Complete member turnout rankings. Resets on the 1st of every month.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowLeaderboardModal(false)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by member name, #membership number, or rank..."
+                    value={leaderboardSearch}
+                    onChange={(e) => setLeaderboardSearch(e.target.value)}
+                    className="w-full pl-10 pr-9 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 transition"
+                  />
+                  {leaderboardSearch && (
+                    <button
+                      onClick={() => setLeaderboardSearch('')}
+                      className="absolute right-3 top-2.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Leaderboard Table / List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {loadingLeaderboard ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
+                    <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <span className="text-xs font-bold">Loading monthly leaderboard...</span>
+                  </div>
+                ) : (() => {
+                  const filtered = leaderboardData.allRanked.filter((entry) => {
+                    if (!leaderboardSearch.trim()) return true;
+                    const q = leaderboardSearch.toLowerCase().trim();
+                    return (
+                      entry.name.toLowerCase().includes(q) ||
+                      (entry.membershipNumber && String(entry.membershipNumber).toLowerCase().includes(q)) ||
+                      String(entry.rank).includes(q)
+                    );
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
+                        <span className="text-xs font-semibold">No matching members found.</span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {filtered.map((entry) => (
+                        <div
+                          key={entry.clientId}
+                          className="flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-900/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-xs"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {/* Rank Badge */}
+                            <span
+                              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
+                                entry.rank === 1
+                                  ? 'bg-amber-400 text-zinc-950 shadow-xs'
+                                  : entry.rank === 2
+                                  ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                                  : entry.rank === 3
+                                  ? 'bg-amber-700 text-white shadow-xs'
+                                  : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                              }`}
+                            >
+                              {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+                            </span>
+
+                            <div className="truncate">
+                              <span className="font-bold text-zinc-800 dark:text-white">
+                                {entry.name}
+                              </span>
+                              {entry.membershipNumber && (
+                                <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 ml-2">
+                                  #{entry.membershipNumber}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0 pl-3">
+                            <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">
+                              {entry.presentDays}
+                            </span>
+                            <span className="text-[11px] font-semibold text-zinc-400">
+                              {entry.presentDays === 1 ? 'day' : 'days'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-5 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 flex items-center justify-between text-xs text-zinc-500 shrink-0">
+                <span>Total Ranked Members: <strong>{leaderboardData.allRanked.length}</strong></span>
+                <button
+                  onClick={() => setShowLeaderboardModal(false)}
+                  className="px-4 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Date Range Selector Box */}
         <div className="rounded-2xl border border-zinc-200 bg-white p-4 md:p-5 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">

@@ -19,7 +19,6 @@ export const CheckInPage: React.FC = () => {
 
   // Leaderboard View State (Accessible anytime without location requirement)
   const [showLeaderboardView, setShowLeaderboardView] = useState(false);
-  const [leaderboardSearch, setLeaderboardSearch] = useState('');
   const [leaderboardData, setLeaderboardData] = useState<{
     top10: LeaderboardEntry[];
     allRanked: LeaderboardEntry[];
@@ -230,38 +229,15 @@ export const CheckInPage: React.FC = () => {
 
   const currentMonthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
-  // Filter leaderboard rankings by search
-  const filteredRankings = leaderboardData.allRanked.filter(entry => {
-    if (!leaderboardSearch.trim()) return true;
-    const q = leaderboardSearch.toLowerCase().trim();
-    return (
-      entry.name.toLowerCase().includes(q) ||
-      (entry.membershipNumber && String(entry.membershipNumber).toLowerCase().includes(q)) ||
-      String(entry.rank).includes(q)
-    );
-  });
+  // Current remembered / entered membership number
+  const activeUserMem = (membershipNumber || localStorage.getItem('client_saved_membership') || '').trim().toLowerCase();
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-zinc-100 relative">
       
       {/* Top Action Bar */}
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        {/* Open Leaderboard Button (Always accessible) */}
-        {!showLeaderboardView && (
-          <button
-            onClick={() => {
-              setShowLeaderboardView(true);
-              fetchLeaderboard();
-            }}
-            className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
-          >
-            <Trophy className="h-3.5 w-3.5 text-amber-400 animate-bounce" />
-            <span>Open Leaderboard</span>
-          </button>
-        )}
-
-        {/* Dev Reset Button */}
-        {gymSettings.enableTestMode && (
+      {gymSettings.enableTestMode && (
+        <div className="absolute top-4 right-4 flex items-center gap-2">
           <button 
             onClick={handleClearTestData}
             className="bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-mono transition-colors"
@@ -269,19 +245,19 @@ export const CheckInPage: React.FC = () => {
           >
             [Dev: Reset Test Data]
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
-      {/* 1. STANDALONE LEADERBOARD VIEW (Available anytime regardless of location)  */}
+      {/* 1. STANDALONE LEADERBOARD VIEW (Top 10 + Current User Position Fallback)    */}
       {/* ========================================================================= */}
       {showLeaderboardView ? (
         <div className="bg-zinc-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-zinc-700 transition-all space-y-5">
-          {/* Header */}
+          {/* Header - Only one back button on top left */}
           <div className="flex items-center justify-between border-b border-zinc-700 pb-3">
             <button
               onClick={() => setShowLeaderboardView(false)}
-              className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-white bg-zinc-700/60 hover:bg-zinc-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-700/60 hover:bg-zinc-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back to Check-In</span>
@@ -301,111 +277,133 @@ export const CheckInPage: React.FC = () => {
               Monthly Leaderboard
             </h2>
             <p className="text-xs text-zinc-400">
-              Top attendance turnout for {currentMonthName}. Automatically resets on the 1st of every month.
+              Top 10 attendance turnout for {currentMonthName}. Resets on the 1st of every month.
             </p>
           </div>
 
-          {/* Search Member in Leaderboard */}
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search member name or #number..."
-              value={leaderboardSearch}
-              onChange={(e) => setLeaderboardSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-zinc-900/90 border border-zinc-700 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400 transition"
-            />
-            {leaderboardSearch && (
-              <button
-                onClick={() => setLeaderboardSearch('')}
-                className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-zinc-200"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Leaderboard List */}
+          {/* Top 10 Leaderboard List */}
           {loadingLeaderboard ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-8 h-8 border-3 border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
               <span className="text-xs text-zinc-400 font-semibold">Loading Leaderboard...</span>
             </div>
-          ) : filteredRankings.length > 0 ? (
-            <div className="bg-zinc-900 rounded-xl border border-zinc-700/80 divide-y divide-zinc-800 max-h-[55vh] overflow-y-auto">
-              {filteredRankings.map((entry) => {
-                const savedMem = localStorage.getItem('client_saved_membership') || '';
-                const isSavedClient =
-                  savedMem &&
-                  entry.membershipNumber &&
-                  String(entry.membershipNumber).trim().toLowerCase() === savedMem.trim().toLowerCase();
+          ) : leaderboardData.top10.length > 0 ? (
+            <div className="space-y-3">
+              <div className="bg-zinc-900 rounded-xl border border-zinc-700/80 divide-y divide-zinc-800 overflow-hidden">
+                {leaderboardData.top10.map((entry) => {
+                  const isCurrentClient =
+                    activeUserMem &&
+                    entry.membershipNumber &&
+                    String(entry.membershipNumber).trim().toLowerCase() === activeUserMem;
+
+                  return (
+                    <div
+                      key={entry.clientId}
+                      className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${
+                        isCurrentClient
+                          ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
+                          : 'hover:bg-zinc-800/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {/* Rank Badge */}
+                        <span
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
+                            entry.rank === 1
+                              ? 'bg-amber-400 text-zinc-950 shadow-xs'
+                              : entry.rank === 2
+                              ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                              : entry.rank === 3
+                              ? 'bg-amber-700 text-white shadow-xs'
+                              : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                          }`}
+                        >
+                          {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+                        </span>
+                        
+                        <div className="truncate">
+                          <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200'}`}>
+                            {entry.name}
+                          </span>
+                          {entry.membershipNumber && (
+                            <span className="text-[10px] text-zinc-500 ml-1.5 font-mono">
+                              #{entry.membershipNumber}
+                            </span>
+                          )}
+                          {isCurrentClient && (
+                            <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded">
+                              You
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="font-extrabold text-emerald-400">
+                          {entry.presentDays}
+                        </span>
+                        <span className="text-[10px] text-zinc-500">days</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* If user has an auto-filled membership number and is NOT in top 10, show their position at bottom */}
+              {(() => {
+                if (!activeUserMem) return null;
+                const isInTop10 = leaderboardData.top10.some(
+                  e => String(e.membershipNumber).trim().toLowerCase() === activeUserMem
+                );
+
+                if (isInTop10) return null;
+
+                const userEntry = leaderboardData.allRanked.find(
+                  e => String(e.membershipNumber).trim().toLowerCase() === activeUserMem
+                );
+
+                if (!userEntry) return null;
 
                 return (
-                  <div
-                    key={entry.clientId}
-                    className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${
-                      isSavedClient
-                        ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
-                        : 'hover:bg-zinc-800/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {/* Rank Badge */}
-                      <span
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
-                          entry.rank === 1
-                            ? 'bg-amber-400 text-zinc-950 shadow-xs'
-                            : entry.rank === 2
-                            ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                            : entry.rank === 3
-                            ? 'bg-amber-700 text-white shadow-xs'
-                            : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                        }`}
-                      >
-                        {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
-                      </span>
-                      
-                      <div className="truncate">
-                        <span className={`truncate ${isSavedClient ? 'text-emerald-300 font-black' : 'text-zinc-200'}`}>
-                          {entry.name}
+                  <div className="mt-3 pt-2">
+                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Flame className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Your Current Position</span>
+                    </div>
+                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-500/15 border-2 border-emerald-500/50 text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-zinc-950 font-black text-xs">
+                          #{userEntry.rank}
                         </span>
-                        {entry.membershipNumber && (
-                          <span className="text-[10px] text-zinc-500 ml-1.5 font-mono">
-                            #{entry.membershipNumber}
+                        <div className="truncate">
+                          <span className="text-emerald-300 font-bold truncate">
+                            {userEntry.name}
                           </span>
-                        )}
-                        {isSavedClient && (
+                          <span className="text-[10px] text-emerald-400/80 ml-1.5 font-mono">
+                            (#{userEntry.membershipNumber})
+                          </span>
                           <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded">
                             You
                           </span>
-                        )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="font-extrabold text-emerald-400">
-                        {entry.presentDays}
-                      </span>
-                      <span className="text-[10px] text-zinc-500">days</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="font-extrabold text-emerald-400">
+                          {userEntry.presentDays}
+                        </span>
+                        <span className="text-[10px] text-emerald-400/80">days</span>
+                      </div>
                     </div>
                   </div>
                 );
-              })}
+              })()}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-zinc-500 text-center">
-              <span className="text-xs font-semibold">No matching members found in the leaderboard.</span>
+              <span className="text-xs font-semibold">No attendance recorded for this month yet.</span>
             </div>
           )}
-
-          <div className="pt-2 text-center">
-            <button
-              onClick={() => setShowLeaderboardView(false)}
-              className="w-full py-2.5 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer"
-            >
-              Back to Check-In Screen
-            </button>
-          </div>
         </div>
       ) : (
         /* ========================================================================= */
@@ -496,7 +494,7 @@ export const CheckInPage: React.FC = () => {
               </div>
               <p className="text-red-400 text-center font-medium mb-6 text-lg">{errorMessage}</p>
               
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="flex items-center justify-center">
                 <button 
                   onClick={() => {
                     if (errorMessage.includes('Location') || errorMessage.includes('not inside the gym')) {
@@ -508,18 +506,6 @@ export const CheckInPage: React.FC = () => {
                   className="px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors cursor-pointer text-sm font-semibold"
                 >
                   Try Again
-                </button>
-                
-                {/* Leaderboard button on error/mismatch */}
-                <button 
-                  onClick={() => {
-                    setShowLeaderboardView(true);
-                    fetchLeaderboard();
-                  }}
-                  className="px-5 py-2 bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-amber-300 rounded-lg transition-colors cursor-pointer text-sm font-bold flex items-center gap-1.5"
-                >
-                  <Trophy className="h-4 w-4 text-amber-400" />
-                  View Leaderboard
                 </button>
               </div>
             </div>
