@@ -35,7 +35,19 @@ export interface GymDB {
     longitude: number;
     browser: string;
     ipAddress: string;
-  }): Promise<{ success: boolean; error?: string; details?: { name: string; membership_number: string; time: string } }>;
+  }): Promise<{
+    success: boolean;
+    error?: string;
+    details?: {
+      name: string;
+      membership_number: string;
+      time: string;
+      membership_end?: string;
+      is_expired?: boolean;
+      days_left?: number;
+      subscription_alert?: string;
+    };
+  }>;
 
   // For Testing Only
   clearTestDeviceHistory(deviceFingerprint: string): Promise<void>;

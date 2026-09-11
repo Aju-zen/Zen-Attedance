@@ -110,6 +110,18 @@ export const AttendancePage: React.FC = () => {
     return { weekday: '', dayMonth: dateStr };
   };
 
+  // Helper to format check-in time (e.g. "9:45 AM")
+  const formatCheckInTime = (isoString?: string) => {
+    if (!isoString) return '';
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    } catch {
+      return '';
+    }
+  };
+
   // Find attendance status for a client on a specific date
   const getAttendanceRecord = (clientId: string, dateStr: string) => {
     return rangeAttendance.find(a => a.client_id === clientId && a.date === dateStr);
@@ -656,6 +668,7 @@ export const AttendancePage: React.FC = () => {
                         const status = record ? record.status : 'Absent';
                         const isSelfCheckIn = Boolean(record?.device_fingerprint && record?.status === 'Present');
                         const isToday = dateStr === todayStr;
+                        const checkInTime = isSelfCheckIn ? formatCheckInTime(record?.marked_at) : '';
 
                         return (
                           <td
@@ -664,10 +677,9 @@ export const AttendancePage: React.FC = () => {
                               isToday ? 'bg-emerald-500/5 dark:bg-emerald-500/5' : ''
                             }`}
                           >
-                            <div className="flex items-center justify-center">
+                            <div className="flex flex-col items-center justify-center">
                               <button
                                 type="button"
-                                disabled={isExpired}
                                 onClick={() => handleToggle(client.id, dateStr, status)}
                                 className={`relative flex h-8 w-8 items-center justify-center rounded-xl border transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
                                   status === 'Present'
@@ -676,7 +688,7 @@ export const AttendancePage: React.FC = () => {
                                       : 'bg-emerald-500 border-emerald-500 text-white shadow-xs shadow-emerald-500/30'
                                     : 'bg-rose-500 border-rose-500 text-white shadow-xs shadow-rose-500/30'
                                 }`}
-                                title={status === 'Present' ? (isSelfCheckIn ? 'Self Checked-In via device (Click to toggle)' : 'Mark Absent') : 'Mark Present'}
+                                title={status === 'Present' ? (isSelfCheckIn ? `Self Checked-In via mobile at ${checkInTime || 'today'} (Click to toggle)` : 'Mark Absent') : 'Mark Present'}
                               >
                                 {status === 'Present' ? (
                                   <Check className="h-4 w-4 stroke-[3]" />
@@ -689,6 +701,11 @@ export const AttendancePage: React.FC = () => {
                                   </span>
                                 )}
                               </button>
+                              {checkInTime && (
+                                <span className="mt-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 leading-tight">
+                                  {checkInTime}
+                                </span>
+                              )}
                             </div>
                           </td>
                         );

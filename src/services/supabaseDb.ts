@@ -459,37 +459,154 @@ export const supabaseDb: GymDB = {
     return data as MembershipHistory;
   },
 
-  async processSelfCheckIn(params) {
+  async processSelfCheckIn(params): Promise<{
+    success: boolean;
+    error?: string;
+    details?: {
+      name: string;
+      membership_number: string;
+      time: string;
+      membership_end?: string;
+      is_expired?: boolean;
+      days_left?: number;
+      subscription_alert?: string;
+    };
+  }> {
     const supabase = getSupabaseClient();
     if (!supabase) throw new Error('Supabase client not initialized');
 
-    const { data, error } = await supabase.rpc('process_self_check_in', {
-      p_membership_number: params.membershipNumber,
-      p_device_fingerprint: params.deviceFingerprint,
-      p_latitude: params.latitude,
-      p_longitude: params.longitude,
-      p_browser: params.browser,
-      p_ip_address: params.ipAddress
-    });
+    const cleanNum = params.membershipNumber.trim();
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    if (error) {
-      console.error('Supabase processSelfCheckIn error:', error);
-      return { success: false, error: error.message };
+    // 1. Fetch client by membership number
+    const { data: clientData, error: clientErr } = await supabase
+      .from('clients')
+      .select('*')
+      .ilike('membership_number', cleanNum)
+      .maybeSingle();
+
+    if (clientErr) {
+      console.error('Supabase fetch client error:', clientErr);
+      return { success: false, error: clientErr.message };
     }
 
-    // Since the RPC returns a JSON object, check the structure
-    if (data && data.success) {
-      return {
-        success: true,
-        details: {
-          name: data.client_name || 'Member', // Ideally we'd get name back too, but we didn't add it in SQL, we can just say 'Member' or refetch. Let's do a quick refetch of name if needed, or just let UI show the membership.
-          membership_number: params.membershipNumber,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    if (!clientData) {
+      return { success: false, error: 'Invalid membership number.' };
+    }
+
+    // 2. Check Device Restriction (Ensure device wasn't used for a DIFFERENT member today)
+    const { data: devCheck } = await supabase
+      .from('device_checkins')
+      .select('*')
+      .eq('device_fingerprint', params.deviceFingerprint)
+      .eq('check_in_date', todayStr);
+
+    if (devCheck && devCheck.length > 0) {
+      const differentMemberCheckin = devCheck.find(
+        (dc: any) => dc.membership_number.toLowerCase() !== cleanNum.toLowerCase()
+      );
+      if (differentMemberCheckin) {
+        return {
+          success: false,
+          error: 'This device has already been used today to check in another member.',
+        };
+      }
+    }
+
+    // 3. Check Duplicate Attendance (if already marked present today)
+    const { data: existingAtt } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('client_id', clientData.id)
+      .eq('date', todayStr)
+      .eq('status', 'Present');
+
+    if (existingAtt && existingAtt.length > 0) {
+      return { success: false, error: 'Attendance already marked today.' };
+    }
+
+    // 4. Mark Attendance (Present)
+    const markedAtIso = new Date().toISOString();
+    const { error: attError } = await supabase.from('attendance').upsert(
+      {
+        client_id: clientData.id,
+        date: todayStr,
+        status: 'Present',
+        latitude: params.latitude,
+        longitude: params.longitude,
+        device_fingerprint: params.deviceFingerprint,
+        marked_at: markedAtIso,
+      },
+      { onConflict: 'client_id,date' }
+    );
+
+    if (attError) {
+      console.error('Supabase mark attendance error:', attError);
+      return { success: false, error: 'Failed to record attendance in database.' };
+    }
+
+    // 5. Record Device Check-in Audit
+    try {
+      await supabase.from('device_checkins').insert({
+        device_fingerprint: params.deviceFingerprint,
+        membership_number: clientData.membership_number,
+        check_in_date: todayStr,
+        check_in_time: markedAtIso,
+        ip_address: params.ipAddress,
+        browser: params.browser,
+        location_latitude: params.latitude,
+        location_longitude: params.longitude,
+      });
+    } catch (dcErr) {
+      console.warn('Device checkin log warning:', dcErr);
+    }
+
+    // 6. Calculate Subscription Alert Message
+    let subscription_alert: string | undefined = undefined;
+    let is_expired = false;
+    let days_left: number | undefined = undefined;
+
+    if (clientData.membership_end) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const parts = clientData.membership_end.split('-');
+      if (parts.length === 3) {
+        const endDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        endDate.setHours(0, 0, 0, 0);
+
+        const diffTime = endDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const dd = String(endDate.getDate()).padStart(2, '0');
+        const mm = String(endDate.getMonth() + 1).padStart(2, '0');
+        const yyyy = endDate.getFullYear();
+        const formattedEndDate = `${dd}-${mm}-${yyyy}`;
+
+        if (diffDays < 0) {
+          is_expired = true;
+          days_left = diffDays;
+          subscription_alert = `Your subscription ended on: "${formattedEndDate}"`;
+        } else if (diffDays <= 7) {
+          is_expired = false;
+          days_left = diffDays;
+          subscription_alert = `Your Subscription ends in (${diffDays}) Days.`;
         }
-      };
-    } else {
-      return { success: false, error: data?.error || 'Unknown error' };
+      }
     }
+
+    return {
+      success: true,
+      details: {
+        name: clientData.name,
+        membership_number: clientData.membership_number,
+        time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true }),
+        membership_end: clientData.membership_end,
+        is_expired,
+        days_left,
+        subscription_alert,
+      },
+    };
   },
 
   async clearTestDeviceHistory(deviceFingerprint: string): Promise<void> {

@@ -320,6 +320,15 @@ export const CheckInPage: React.FC = () => {
                   <span className="text-zinc-400">Time:</span>
                   <span className="font-medium text-white">{successDetails.time}</span>
                 </div>
+                {successDetails.subscription_alert && (
+                  <div className={`mt-3 pt-3 border-t border-zinc-800 text-center font-bold text-sm px-3 py-2 rounded-lg ${
+                    successDetails.is_expired
+                      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                      : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                  }`}>
+                    {successDetails.subscription_alert}
+                  </div>
+                )}
               </div>
             )}
             
