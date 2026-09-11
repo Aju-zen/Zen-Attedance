@@ -75,10 +75,16 @@
 
 /* Print stylesheet for high-quality reports (PDF export) */
 @media print {
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
   body {
     background-color: white !important;
-    color: #0f172a !important;
+    color: black !important;
     font-size: 11pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   .no-print {
     display: none !important;
@@ -86,33 +92,15 @@
   .print-only {
     display: block !important;
   }
-  .print-card {
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    background: white !important;
-    color: #0f172a !important;
-    page-break-inside: avoid;
-  }
-  .print-page-break {
-    page-break-before: always;
-  }
   table {
     page-break-inside: auto;
     width: 100% !important;
     border-collapse: collapse !important;
-  }
-  th, td {
-    border: 1px solid #cbd5e1 !important;
-    color: #0f172a !important;
-  }
-  th {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
-    font-weight: 800 !important;
   }
   tr {
     page-break-inside: avoid;
     page-break-after: auto;
   }
 }
+
 
