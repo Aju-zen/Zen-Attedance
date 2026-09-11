@@ -36,7 +36,7 @@ export const Sidebar: React.FC = () => {
             {settings.logoUrl && settings.logoUrl !== 'Dumbbell' ? (
               <img src={settings.logoUrl} alt="Logo" className="h-full w-full object-cover" />
             ) : (
-              <Dumbbell className="h-4 w-4" />
+              <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-0.5" />
             )}
           </div>
           <div className="flex flex-col">
@@ -89,7 +89,7 @@ export const Sidebar: React.FC = () => {
             {settings.logoUrl && settings.logoUrl !== 'Dumbbell' ? (
               <img src={settings.logoUrl} alt="Logo" className="h-full w-full object-cover" />
             ) : (
-              <Dumbbell className="h-6 w-6" />
+              <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-1" />
             )}
           </div>
           <div className="overflow-hidden">

@@ -220,7 +220,7 @@ export const CheckInPage: React.FC = () => {
             {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
               <img src={gymSettings.logoUrl} alt="Gym Logo" className="h-full w-full object-cover" />
             ) : (
-              <span className="text-2xl">💪</span>
+              <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-1.5" />
             )}
           </div>
           <h1 className="text-3xl font-extrabold text-center tracking-tight text-white mb-0.5">

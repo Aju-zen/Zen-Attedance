@@ -174,8 +174,8 @@ export const SettingsPage: React.FC = () => {
                   {logoUrl !== 'Dumbbell' && logoUrl ? (
                     <img src={logoUrl} alt="Logo" className="h-10 w-10 rounded-full object-cover bg-zinc-100 dark:bg-zinc-800 shadow-lg shadow-emerald-500/30" />
                   ) : (
-                    <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-full bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-500/30">
-                      <Settings className="h-5 w-5" />
+                    <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-full bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 overflow-hidden">
+                      <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-1" />
                     </div>
                   )}
                   <input
