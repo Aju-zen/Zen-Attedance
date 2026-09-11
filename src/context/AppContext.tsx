@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Client, Attendance, AppNotification, GymSettings } from '../types';
+import { Client, Attendance, AppNotification, GymSettings, DatabaseBackup } from '../types';
 import { db, defaultSettings } from '../services/db';
 import { getSupabaseClient } from '../services/supabaseDb';
 
@@ -29,6 +29,9 @@ interface AppContextType {
   testConnection: (url: string, key: string) => Promise<boolean>;
   seedSupabase: () => Promise<boolean>;
   deleteMockData: () => Promise<boolean>;
+  exportBackup: () => Promise<boolean>;
+  parseBackupFile: (file: File) => Promise<DatabaseBackup>;
+  importBackup: (backupData: DatabaseBackup, mode?: 'merge' | 'replace') => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -355,6 +358,87 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const exportBackup = async (): Promise<boolean> => {
+    try {
+      const backup = await db.exportDatabaseBackup();
+      const jsonStr = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
+      const filename = `zen_attendance_backup_${dateStr}_${timeStr}.json`;
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      addNotification(
+        'success',
+        `Database backup exported successfully! (${backup.summary.clients_count} clients, ${backup.summary.attendance_count} attendance records)`
+      );
+      return true;
+    } catch (e: any) {
+      console.error('Export backup error:', e);
+      addNotification('error', `Failed to export backup: ${e.message || 'Unknown error'}`);
+      return false;
+    }
+  };
+
+  const parseBackupFile = async (file: File): Promise<DatabaseBackup> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const parsed = JSON.parse(content);
+          if (!parsed || !parsed.data || !Array.isArray(parsed.data.clients)) {
+            throw new Error('Invalid backup file format: Missing clients data structure.');
+          }
+          resolve(parsed as DatabaseBackup);
+        } catch (err: any) {
+          reject(new Error(`Failed to read backup file: ${err.message}`));
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file from disk.'));
+      reader.readAsText(file);
+    });
+  };
+
+  const importBackup = async (
+    backupData: DatabaseBackup,
+    mode: 'merge' | 'replace' = 'replace'
+  ): Promise<boolean> => {
+    try {
+      const res = await db.importDatabaseBackup(backupData, mode);
+      if (res.success) {
+        addNotification(
+          'success',
+          `Backup restored successfully! Restored ${res.stats.clients} clients, ${res.stats.attendance} attendance records.`
+        );
+        // Refresh clients, attendance and settings
+        await refreshClients();
+        const globalSettings = await db.getGlobalSettings();
+        if (globalSettings) {
+          const merged = { ...defaultSettings, ...globalSettings };
+          setSettings(merged);
+          applyTheme(merged.theme);
+        }
+        return true;
+      }
+      return false;
+    } catch (e: any) {
+      console.error('Import backup error:', e);
+      addNotification('error', `Failed to restore backup: ${e.message || 'Unknown error'}`);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -383,6 +467,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         testConnection,
         seedSupabase,
         deleteMockData,
+        exportBackup,
+        parseBackupFile,
+        importBackup,
       }}
     >
       {children}

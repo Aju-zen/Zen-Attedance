@@ -47,3 +47,25 @@ export interface AppNotification {
   message: string;
   timestamp: string;       // ISO timestamp
 }
+
+export interface DatabaseBackup {
+  app: string;
+  version: string;
+  exported_at: string;
+  gym_name?: string;
+  summary: {
+    clients_count: number;
+    attendance_count: number;
+    membership_history_count: number;
+    device_checkins_count: number;
+  };
+  data: {
+    clients: Client[];
+    attendance: Attendance[];
+    membership_history: MembershipHistory[];
+    device_checkins: any[];
+    gym_settings: any[];
+    custom_client_order?: string[];
+  };
+}
+

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
-import { Settings, Save, MapPin, ShieldCheck, Lock, Unlock, Play, Trash2 } from 'lucide-react';
+import { Settings, Save, MapPin, ShieldCheck, Lock, Unlock, Play, Trash2, Download, Upload, Database, FileJson, CheckCircle2, AlertTriangle, X, RefreshCw, Layers } from 'lucide-react';
+import { DatabaseBackup } from '../types';
 
 export const SettingsPage: React.FC = () => {
   const {
@@ -10,6 +11,9 @@ export const SettingsPage: React.FC = () => {
     seedSupabase,
     deleteMockData,
     refreshClients,
+    exportBackup,
+    parseBackupFile,
+    importBackup,
   } = useApp();
 
   const [gymName, setGymName] = useState(settings.gymName || '');
@@ -24,6 +28,11 @@ export const SettingsPage: React.FC = () => {
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [isSeeding, setIsSeeding] = useState(false);
   const [isDeletingMock, setIsDeletingMock] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [pendingBackup, setPendingBackup] = useState<DatabaseBackup | null>(null);
+  const [restoreMode, setRestoreMode] = useState<'replace' | 'merge'>('replace');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 1. Save general settings
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -67,6 +76,40 @@ export const SettingsPage: React.FC = () => {
 
     if (success) {
       refreshClients();
+    }
+  };
+
+  // 4. Export Database Backup
+  const handleExportBackup = async () => {
+    setIsExporting(true);
+    await exportBackup();
+    setIsExporting(false);
+  };
+
+  // 5. Select File for Import
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const parsed = await parseBackupFile(file);
+      setPendingBackup(parsed);
+    } catch (err: any) {
+      addNotification('error', err.message || 'Invalid backup file');
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // 6. Confirm and Run Restore
+  const handleConfirmRestore = async () => {
+    if (!pendingBackup) return;
+    setIsImporting(true);
+    const success = await importBackup(pendingBackup, restoreMode);
+    setIsImporting(false);
+    if (success) {
+      setPendingBackup(null);
     }
   };
 
@@ -193,6 +236,88 @@ export const SettingsPage: React.FC = () => {
                   <option value="light">Light Mode</option>
                   <option value="dark">Dark Mode</option>
                 </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Database Backup & Disaster Recovery Card */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Database className="h-4.5 w-4.5 text-emerald-500" />
+                  Database Backup & Disaster Recovery
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Export all database tables to a JSON file or restore from a previous backup snapshot.
+                </p>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 self-start sm:self-auto shrink-0">
+                100% Full DB Dump
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {/* Export Card */}
+              <div className="flex flex-col justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 space-y-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Download className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-sm font-bold text-zinc-800 dark:text-white">Export Full Database</span>
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                    Downloads an exact JSON backup containing all <strong>Clients</strong>, <strong>Attendance Records</strong>, <strong>Membership Histories</strong>, <strong>Device Check-ins</strong>, <strong>Settings</strong>, and <strong>Custom Client Order</strong>.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleExportBackup}
+                  disabled={isExporting}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {isExporting ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      Generating Backup...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-3.5 w-3.5" />
+                      Export Data (.json)
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Import Card */}
+              <div className="flex flex-col justify-between p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 space-y-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-sm font-bold text-zinc-800 dark:text-white">Import Database Backup</span>
+                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                    Upload a previously exported backup file (<code className="font-mono text-3xs bg-zinc-200 dark:bg-zinc-700 px-1 py-0.5 rounded">.json</code>) to restore your entire database or recover deleted data.
+                  </p>
+                </div>
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isImporting}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-98 text-white px-4 py-2.5 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Import Backup File (.json)
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -378,6 +503,159 @@ export const SettingsPage: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Backup Confirmation & Restore Preview Modal */}
+      {pendingBackup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden animate-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                  <FileJson className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white">Restore Database Backup</h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Exported on {new Date(pendingBackup.exported_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPendingBackup(null)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Modal Body: Stats Breakdown */}
+            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-center">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Clients</span>
+                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                    {pendingBackup.summary?.clients_count ?? pendingBackup.data.clients?.length ?? 0}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-center">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Attendance</span>
+                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                    {pendingBackup.summary?.attendance_count ?? pendingBackup.data.attendance?.length ?? 0}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-center">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Renewals</span>
+                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                    {pendingBackup.summary?.membership_history_count ?? pendingBackup.data.membership_history?.length ?? 0}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-center">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Check-ins</span>
+                  <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">
+                    {pendingBackup.summary?.device_checkins_count ?? pendingBackup.data.device_checkins?.length ?? 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Restore Mode Choice */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block">
+                  Select Restore Strategy:
+                </label>
+                <div className="space-y-2">
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      restoreMode === 'replace'
+                        ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 dark:border-emerald-500/60'
+                        : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="restoreMode"
+                      checked={restoreMode === 'replace'}
+                      onChange={() => setRestoreMode('replace')}
+                      className="mt-0.5 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-zinc-800 dark:text-white block">
+                        Full Restore (Wipe & Replace) - Recommended
+                      </span>
+                      <span className="text-3xs text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                        Clears existing database records and perfectly restores all data from the backup snapshot.
+                      </span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                      restoreMode === 'merge'
+                        ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20 dark:border-indigo-500/60'
+                        : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="restoreMode"
+                      checked={restoreMode === 'merge'}
+                      onChange={() => setRestoreMode('merge')}
+                      className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-zinc-800 dark:text-white block">
+                        Merge / Upsert Only
+                      </span>
+                      <span className="text-3xs text-zinc-500 dark:text-zinc-400 block mt-0.5">
+                        Keeps existing database records, overwriting matching records and appending new ones.
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Warning Notice */}
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <p className="text-3xs sm:text-xs leading-relaxed">
+                  This action writes data directly to your connected database. All relations and UUIDs from the backup will be restored.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-2.5 px-5 py-3.5 bg-zinc-50 dark:bg-zinc-800/40 border-t border-zinc-100 dark:border-zinc-800">
+              <button
+                type="button"
+                disabled={isImporting}
+                onClick={() => setPendingBackup(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/60 dark:hover:bg-zinc-700 transition cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isImporting}
+                onClick={handleConfirmRestore}
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                {isImporting ? (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    Restoring Database...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Confirm & Restore Data
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

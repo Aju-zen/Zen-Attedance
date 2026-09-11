@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Client, Attendance, MembershipHistory, GymSettings } from '../types';
+import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup } from '../types';
 import { GymDB } from './db';
 
 let cachedClient: SupabaseClient | null = null;
@@ -477,5 +477,234 @@ export const supabaseDb: GymDB = {
       console.error('Exception updating global settings:', e.message);
       return false;
     }
+  },
+
+  async exportDatabaseBackup(): Promise<DatabaseBackup> {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase client not initialized');
+
+    // 1. Fetch all clients
+    const { data: clientsData, error: clientErr } = await supabase
+      .from('clients')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (clientErr) throw clientErr;
+
+    // 2. Fetch all attendance
+    const { data: attendanceData, error: attErr } = await supabase
+      .from('attendance')
+      .select('*')
+      .order('date', { ascending: true });
+    if (attErr) throw attErr;
+
+    // 3. Fetch all membership_history
+    const { data: historyData, error: histErr } = await supabase
+      .from('membership_history')
+      .select('*')
+      .order('renewed_on', { ascending: true });
+    if (histErr) throw histErr;
+
+    // 4. Fetch device_checkins (graceful fallback if table not yet created)
+    let deviceCheckinsData: any[] = [];
+    try {
+      const { data: devData, error: devErr } = await supabase
+        .from('device_checkins')
+        .select('*')
+        .order('check_in_time', { ascending: true });
+      if (!devErr && devData) {
+        deviceCheckinsData = devData;
+      }
+    } catch {
+      // ignore
+    }
+
+    // 5. Fetch gym_settings
+    let gymSettingsData: any[] = [];
+    try {
+      const { data: setts, error: setErr } = await supabase
+        .from('gym_settings')
+        .select('*');
+      if (!setErr && setts) {
+        gymSettingsData = setts;
+      }
+    } catch {
+      // ignore
+    }
+
+    // 6. Custom order from localStorage
+    let customOrder: string[] = [];
+    try {
+      const saved = localStorage.getItem('zen_custom_client_order');
+      if (saved) customOrder = JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+
+    const backup: DatabaseBackup = {
+      app: 'Zen Attendance',
+      version: '1.0',
+      exported_at: new Date().toISOString(),
+      gym_name: gymSettingsData[0]?.gym_name || 'Zen Attendance',
+      summary: {
+        clients_count: clientsData?.length || 0,
+        attendance_count: attendanceData?.length || 0,
+        membership_history_count: historyData?.length || 0,
+        device_checkins_count: deviceCheckinsData?.length || 0,
+      },
+      data: {
+        clients: (clientsData as Client[]) || [],
+        attendance: (attendanceData as Attendance[]) || [],
+        membership_history: (historyData as MembershipHistory[]) || [],
+        device_checkins: deviceCheckinsData || [],
+        gym_settings: gymSettingsData || [],
+        custom_client_order: customOrder,
+      },
+    };
+
+    return backup;
+  },
+
+  async importDatabaseBackup(
+    backup: DatabaseBackup,
+    mode: 'merge' | 'replace' = 'replace'
+  ): Promise<{
+    success: boolean;
+    stats: {
+      clients: number;
+      attendance: number;
+      membership_history: number;
+      device_checkins: number;
+    };
+  }> {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase client not initialized');
+
+    if (!backup || !backup.data || !Array.isArray(backup.data.clients)) {
+      throw new Error('Invalid backup file structure: Missing clients data.');
+    }
+
+    const stats = {
+      clients: 0,
+      attendance: 0,
+      membership_history: 0,
+      device_checkins: 0,
+    };
+
+    // If replace mode is chosen, wipe existing data in cascading dependency order
+    if (mode === 'replace') {
+      try {
+        await supabase.from('device_checkins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } catch (e) {
+        console.warn('Wipe device_checkins warning:', e);
+      }
+      try {
+        await supabase.from('attendance').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } catch (e) {
+        console.warn('Wipe attendance warning:', e);
+      }
+      try {
+        await supabase.from('membership_history').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } catch (e) {
+        console.warn('Wipe membership_history warning:', e);
+      }
+      try {
+        await supabase.from('clients').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      } catch (e) {
+        console.warn('Wipe clients warning:', e);
+      }
+    }
+
+    // Helper to chunk arrays to prevent payload too large
+    const chunkArray = <T>(arr: T[], size: number): T[][] => {
+      const chunks: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+      }
+      return chunks;
+    };
+
+    // 1. Restore Clients
+    if (backup.data.clients && backup.data.clients.length > 0) {
+      const clientChunks = chunkArray(backup.data.clients, 50);
+      for (const chunk of clientChunks) {
+        const { error } = await supabase.from('clients').upsert(chunk, { onConflict: 'id' });
+        if (error) {
+          console.error('Error restoring clients chunk:', error);
+          throw new Error(`Failed to restore clients: ${error.message}`);
+        }
+        stats.clients += chunk.length;
+      }
+    }
+
+    // 2. Restore Attendance
+    if (backup.data.attendance && backup.data.attendance.length > 0) {
+      const attendanceChunks = chunkArray(backup.data.attendance, 100);
+      for (const chunk of attendanceChunks) {
+        const { error } = await supabase.from('attendance').upsert(chunk, { onConflict: 'client_id,date' });
+        if (error) {
+          console.warn('Attendance chunk upsert error (fallback to id conflict):', error);
+          const { error: idErr } = await supabase.from('attendance').upsert(chunk, { onConflict: 'id' });
+          if (idErr) {
+            console.error('Failed restoring attendance chunk:', idErr);
+          }
+        }
+        stats.attendance += chunk.length;
+      }
+    }
+
+    // 3. Restore Membership History
+    if (backup.data.membership_history && backup.data.membership_history.length > 0) {
+      const historyChunks = chunkArray(backup.data.membership_history, 100);
+      for (const chunk of historyChunks) {
+        const { error } = await supabase.from('membership_history').upsert(chunk, { onConflict: 'id' });
+        if (error) {
+          console.warn('Membership history chunk upsert warning:', error);
+        }
+        stats.membership_history += chunk.length;
+      }
+    }
+
+    // 4. Restore Device Check-ins (if any)
+    if (backup.data.device_checkins && backup.data.device_checkins.length > 0) {
+      const devChunks = chunkArray(backup.data.device_checkins, 100);
+      for (const chunk of devChunks) {
+        try {
+          await supabase.from('device_checkins').upsert(chunk, { onConflict: 'id' });
+          stats.device_checkins += chunk.length;
+        } catch (e) {
+          console.warn('Device checkin restore warning:', e);
+        }
+      }
+    }
+
+    // 5. Restore Gym Settings
+    if (backup.data.gym_settings && backup.data.gym_settings.length > 0) {
+      try {
+        const settingRow = backup.data.gym_settings[0];
+        if (settingRow) {
+          await supabase.from('gym_settings').upsert({
+            ...settingRow,
+            id: 1,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' });
+        }
+      } catch (e) {
+        console.warn('Gym settings restore warning:', e);
+      }
+    }
+
+    // 6. Restore Custom Client Order to localStorage
+    if (backup.data.custom_client_order && Array.isArray(backup.data.custom_client_order)) {
+      try {
+        localStorage.setItem(
+          'zen_custom_client_order',
+          JSON.stringify(backup.data.custom_client_order)
+        );
+      } catch (e) {
+        console.warn('Custom client order restore warning:', e);
+      }
+    }
+
+    return { success: true, stats };
   }
 };

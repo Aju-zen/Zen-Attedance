@@ -1,4 +1,4 @@
-import { Client, Attendance, MembershipHistory, GymSettings } from '../types';
+import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup } from '../types';
 import { supabaseDb } from './supabaseDb';
 
 export interface GymDB {
@@ -42,6 +42,21 @@ export interface GymDB {
   // Global Settings
   getGlobalSettings(): Promise<Partial<GymSettings> | null>;
   updateGlobalSettings(settings: Partial<GymSettings>): Promise<boolean>;
+
+  // Full Database Backup & Restore
+  exportDatabaseBackup(): Promise<DatabaseBackup>;
+  importDatabaseBackup(
+    backup: DatabaseBackup,
+    mode?: 'merge' | 'replace'
+  ): Promise<{
+    success: boolean;
+    stats: {
+      clients: number;
+      attendance: number;
+      membership_history: number;
+      device_checkins: number;
+    };
+  }>;
 }
 
 export const db: GymDB = supabaseDb;
