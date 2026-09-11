@@ -679,194 +679,225 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. PRINT / PDF EXPORT VIEW                                                */}
-      {/* PAGE 1: Overview & Insights (Most Regular Members, Weekday Trends, etc.)   */}
-      {/* PAGE 2+: Matrx Den 640 Attendance Report (Full 4-Column Table)            */}
+      {/* 2. COMPLETELY NEW PDF / PRINT DOCUMENT (PURE WHITE, TEXT-ONLY, NO BOXES)  */}
       {/* ========================================================================= */}
-      <div className="hidden print:block bg-white text-black font-sans">
-        {/* ----------------- PAGE 1: EXECUTIVE SUMMARY & INSIGHTS ----------------- */}
-        <div className="min-h-[90vh] flex flex-col justify-between pb-8">
+      <div
+        className="hidden print:block font-sans print-root"
+        style={{ backgroundColor: '#ffffff', color: '#000000', margin: 0, padding: 0 }}
+      >
+        {/* ===================================================================== */}
+        {/* PAGE 1: EXECUTIVE INSIGHTS & ANALYTICAL SUMMARY                       */}
+        {/* ===================================================================== */}
+        <div style={{ minHeight: '92vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: '20px' }}>
           <div>
-            {/* Header */}
-            <div className="border-b-2 border-black pb-4 mb-6">
-              <div className="flex justify-between items-start">
+            {/* Header: Gym Name & Report Heading */}
+            <div style={{ borderBottom: '2.5px solid #0f172a', paddingBottom: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h1 className="text-3xl font-black text-black uppercase tracking-wider">
+                  <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                     {settings.gymName}
                   </h1>
-                  <h2 className="text-lg font-bold text-black mt-0.5">
+                  <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b', marginTop: '4px', letterSpacing: '0.02em', margin: 0 }}>
                     Executive Attendance Summary & Analytics
                   </h2>
                 </div>
-                <div className="text-right text-xs font-bold text-black">
-                  <p>Generated: {new Date().toLocaleDateString()}</p>
-                  <p>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                <div style={{ textAlign: 'right', fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>
+                  <p style={{ margin: 0 }}>Generated: {new Date().toLocaleDateString()}</p>
+                  <p style={{ margin: 0, marginTop: '2px' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>
 
-              {/* Duration Banner */}
-              <div className="mt-4 pt-3 border-t border-gray-300 flex items-center justify-between text-sm font-bold text-black">
+              {/* Duration Banner (Text-only line) */}
+              <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #94a3b8', display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
                 <div>
                   <span>Report Duration: </span>
-                  <span className="font-black">
+                  <span style={{ fontWeight: 900, color: '#000000' }}>
                     From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}
                   </span>
                 </div>
                 <div>
                   <span>Total Duration: </span>
-                  <span className="font-black underline">{durationDays} {durationDays === 1 ? 'Day' : 'Days'}</span>
+                  <span style={{ fontWeight: 900, color: '#000000', textDecoration: 'underline' }}>
+                    {durationDays} {durationDays === 1 ? 'Day' : 'Days'}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Key Metrics Grid (Flat, No Boxes, Pure White) */}
-            <div className="grid grid-cols-3 gap-6 pb-6 mb-6 border-b border-gray-300">
-              <div className="border-l-2 border-black pl-3">
-                <p className="text-xs font-bold uppercase text-black">Total Check-Ins</p>
-                <p className="text-3xl font-black text-black mt-1">{totalPresentCount}</p>
-                <p className="text-3xs text-black font-semibold mt-0.5">Recorded in range</p>
-              </div>
-              <div className="border-l-2 border-black pl-3">
-                <p className="text-xs font-bold uppercase text-black">Avg Daily Attendance</p>
-                <p className="text-3xl font-black text-black mt-1">
-                  {avgDailyPresence} <span className="text-xs font-bold">clients/day</span>
+            {/* Key Metrics (Pure text with vertical accent bar, no box backgrounds) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', paddingBottom: '20px', marginBottom: '24px', borderBottom: '1px solid #cbd5e1' }}>
+              <div style={{ borderLeft: '3px solid #0f172a', paddingLeft: '12px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#334155', margin: 0, letterSpacing: '0.05em' }}>
+                  Total Check-Ins
                 </p>
-                <p className="text-3xs text-black font-semibold mt-0.5">Across {gymDays} logged days</p>
+                <p style={{ fontSize: '28px', fontWeight: 900, color: '#000000', margin: '4px 0 0 0', lineHeight: 1 }}>
+                  {totalPresentCount}
+                </p>
+                <p style={{ fontSize: '10px', fontWeight: 600, color: '#475569', margin: '4px 0 0 0' }}>
+                  Recorded attendance in range
+                </p>
               </div>
-              <div className="border-l-2 border-black pl-3">
-                <p className="text-xs font-bold uppercase text-black">Total Members</p>
-                <p className="text-3xl font-black text-black mt-1">{clientStats.length}</p>
-                <p className="text-3xs text-black font-semibold mt-0.5">Active registered clients</p>
+
+              <div style={{ borderLeft: '3px solid #166534', paddingLeft: '12px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#166534', margin: 0, letterSpacing: '0.05em' }}>
+                  Avg Daily Attendance
+                </p>
+                <p style={{ fontSize: '28px', fontWeight: 900, color: '#166534', margin: '4px 0 0 0', lineHeight: 1 }}>
+                  {avgDailyPresence} <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>clients/day</span>
+                </p>
+                <p style={{ fontSize: '10px', fontWeight: 600, color: '#475569', margin: '4px 0 0 0' }}>
+                  Across {gymDays} active logged days
+                </p>
+              </div>
+
+              <div style={{ borderLeft: '3px solid #0f172a', paddingLeft: '12px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#334155', margin: 0, letterSpacing: '0.05em' }}>
+                  Total Active Members
+                </p>
+                <p style={{ fontSize: '28px', fontWeight: 900, color: '#000000', margin: '4px 0 0 0', lineHeight: 1 }}>
+                  {clientStats.length}
+                </p>
+                <p style={{ fontSize: '10px', fontWeight: 600, color: '#475569', margin: '4px 0 0 0' }}>
+                  Registered gym clients
+                </p>
               </div>
             </div>
 
-            {/* Section 1 Details: Most Regular Members & Weekday Trends */}
-            <div className="grid grid-cols-2 gap-8 mb-6">
+            {/* Analytics Section: Most Regular Members & Weekday Trends */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '32px' }}>
               {/* Most Regular Members */}
               <div>
-                <h3 className="text-sm font-black text-black uppercase tracking-wider border-b-2 border-black pb-2 mb-3">
-                  Most Regular Members (Top Performers)
+                <h3 style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#0f172a', borderBottom: '2px solid #0f172a', paddingBottom: '6px', margin: '0 0 12px 0' }}>
+                  Most Regular Members (Top Turnout)
                 </h3>
-                <div className="space-y-2">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {mostRegular.length > 0 ? (
                     mostRegular.map((stat, idx) => (
                       <div
                         key={stat.client.id}
-                        className="flex items-center justify-between text-xs py-1 border-b border-gray-200"
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', paddingBottom: '4px', borderBottom: '1px solid #e2e8f0' }}
                       >
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-black text-black w-4">{idx + 1}.</span>
-                          <span className="font-bold text-black">{stat.client.name}</span>
+                        <div>
+                          <span style={{ fontWeight: 900, color: '#000000', marginRight: '6px' }}>{idx + 1}.</span>
+                          <span style={{ fontWeight: 800, color: '#0f172a' }}>{stat.client.name}</span>
                           {stat.client.membership_number && (
-                            <span className="text-3xs font-normal text-black">
+                            <span style={{ fontSize: '10px', fontWeight: 600, color: '#334155', marginLeft: '6px' }}>
                               (#{stat.client.membership_number})
                             </span>
                           )}
                         </div>
-                        <span className="font-black text-emerald-700">
+                        <span style={{ fontWeight: 900, color: '#166534', fontSize: '12px' }}>
                           {stat.rate}% ({stat.present} days)
                         </span>
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-black py-2">No attendance data logged in this range.</p>
+                    <p style={{ fontSize: '11px', color: '#475569', margin: 0 }}>No attendance data logged in this range.</p>
                   )}
                 </div>
               </div>
 
-              {/* Weekday Trends & Analysis */}
+              {/* Weekday Trends */}
               <div>
-                <h3 className="text-sm font-black text-black uppercase tracking-wider border-b-2 border-black pb-2 mb-3">
+                <h3 style={{ fontSize: '13px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#0f172a', borderBottom: '2px solid #0f172a', paddingBottom: '6px', margin: '0 0 12px 0' }}>
                   Weekday Attendance Patterns
                 </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs py-1.5 border-b border-gray-200">
-                    <span className="font-bold text-black">Highest Attendance Day:</span>
-                    <span className="font-black text-emerald-700 text-sm">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', paddingBottom: '6px', borderBottom: '1px solid #e2e8f0' }}>
+                    <span style={{ fontWeight: 700, color: '#1e293b' }}>Highest Present Weekday:</span>
+                    <span style={{ fontWeight: 900, color: '#166534', fontSize: '13px' }}>
                       {highestWeekday.name} (Avg: {highestWeekday.avg})
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs py-1.5 border-b border-gray-200">
-                    <span className="font-bold text-black">Lowest Attendance Day:</span>
-                    <span className="font-black text-rose-600 text-sm">
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', paddingBottom: '6px', borderBottom: '1px solid #e2e8f0' }}>
+                    <span style={{ fontWeight: 700, color: '#1e293b' }}>Lowest Present Weekday:</span>
+                    <span style={{ fontWeight: 900, color: '#991b1b', fontSize: '13px' }}>
                       {lowestWeekday.name} (Avg: {lowestWeekday.avg})
                     </span>
                   </div>
-                  <div className="pt-2 text-xs font-semibold text-black leading-relaxed">
-                    This summary captures general attendance velocity, weekday turnout, and overall member consistency across the selected duration. Detailed client breakdowns follow on page 2.
-                  </div>
+
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#334155', lineHeight: 1.5, margin: '8px 0 0 0' }}>
+                    This analytical overview highlights gym engagement, peak days, and regular member consistency during the period. The complete individual member attendance report begins on Page 2.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Page 1 Footer */}
-          <div className="pt-3 border-t-2 border-black flex items-center justify-between text-xs font-bold text-black">
+          <div style={{ borderTop: '2px solid #0f172a', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>
             <span>Zen Attendance</span>
             <span>Page 1 of 2</span>
           </div>
         </div>
 
-        {/* ----------------- PAGE 2+: FULL CLIENT ATTENDANCE REPORT ----------------- */}
-        <div className="break-before-page pt-4">
+        {/* ===================================================================== */}
+        {/* PAGE 2+: FULL MEMBER ATTENDANCE REPORT (TABLE ONLY, NO BOXES)         */}
+        {/* ===================================================================== */}
+        <div style={{ breakBefore: 'page', pageBreakBefore: 'always', paddingTop: '16px' }}>
           {/* Header on Page 2 */}
-          <div className="border-b-2 border-black pb-3 mb-4">
-            <div className="flex justify-between items-end">
+          <div style={{ borderBottom: '2.5px solid #0f172a', paddingBottom: '10px', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div>
-                <h1 className="text-2xl font-black text-black uppercase tracking-wider">
+                <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
                   {settings.gymName} Attendance Report
                 </h1>
-                <p className="text-xs font-bold text-black mt-0.5">
+                <p style={{ fontSize: '11px', fontWeight: 700, color: '#1e293b', marginTop: '2px', margin: 0 }}>
                   Complete Member Attendance Breakdown • From {formatDatePretty(startDate)} to {formatDatePretty(endDate)} ({durationDays} Days)
                 </p>
               </div>
-              <div className="text-right text-xs font-bold text-black">
+              <div style={{ textAlign: 'right', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>
                 <span>Total Listed: {filteredAndSortedStats.length}</span>
               </div>
             </div>
           </div>
 
-          {/* 4-Column Table: Full width, pure white background, dark colors */}
-          <table className="w-full text-left text-xs border-collapse">
+          {/* 4-Column Table: Zero Background Fills, Crisp Flat Lines, Rich Dark Text */}
+          <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '11px' }}>
             <thead>
-              <tr className="border-b-2 border-black text-xs font-black uppercase text-black">
-                <th className="py-2 px-2">Client Name</th>
-                <th className="py-2 px-2 text-center">Days Present</th>
-                <th className="py-2 px-2 text-center">Days Absent</th>
-                <th className="py-2 px-2 text-right">Attendance %</th>
+              <tr style={{ borderBottom: '2px solid #0f172a', color: '#000000', textTransform: 'uppercase', fontSize: '11px', fontWeight: 900, letterSpacing: '0.03em' }}>
+                <th style={{ padding: '8px 6px' }}>Client Name</th>
+                <th style={{ padding: '8px 6px', textAlign: 'center' }}>Days Present</th>
+                <th style={{ padding: '8px 6px', textAlign: 'center' }}>Days Absent</th>
+                <th style={{ padding: '8px 6px', textAlign: 'right' }}>Attendance %</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody>
               {filteredAndSortedStats.map((stat) => {
                 const isHighOrMid = stat.rate >= 50;
 
                 return (
-                  <tr key={stat.client.id} className="text-xs">
-                    {/* 1. Client Name (Solid Black) */}
-                    <td className="py-1.5 px-2 font-bold text-black">
+                  <tr key={stat.client.id} style={{ borderBottom: '1px solid #cbd5e1' }}>
+                    {/* 1. Client Name (Dark Charcoal / Black) */}
+                    <td style={{ padding: '6px', fontWeight: 800, color: '#0f172a' }}>
                       {stat.client.name}
                       {stat.client.membership_number && (
-                        <span className="font-normal text-3xs text-black ml-1.5">
+                        <span style={{ fontWeight: 600, color: '#475569', marginLeft: '6px', fontSize: '10px' }}>
                           (#{stat.client.membership_number})
                         </span>
                       )}
                     </td>
 
-                    {/* 2. Days Present (Dark Green) */}
-                    <td className="py-1.5 px-2 text-center font-black text-emerald-700">
+                    {/* 2. Days Present (Deep Dark Green) */}
+                    <td style={{ padding: '6px', textAlign: 'center', fontWeight: 900, color: '#166534', fontSize: '12px' }}>
                       {stat.present}
                     </td>
 
-                    {/* 3. Days Absent (Dark Red) */}
-                    <td className="py-1.5 px-2 text-center font-black text-rose-600">
+                    {/* 3. Days Absent (Deep Dark Crimson Red) */}
+                    <td style={{ padding: '6px', textAlign: 'center', fontWeight: 900, color: '#991b1b', fontSize: '12px' }}>
                       {stat.absent}
                     </td>
 
-                    {/* 4. Attendance Percentage (Dark Green / Dark Red) */}
+                    {/* 4. Attendance Percentage (Deep Green / Deep Red) */}
                     <td
-                      className={`py-1.5 px-2 text-right font-black ${
-                        isHighOrMid ? 'text-emerald-700' : 'text-rose-600'
-                      }`}
+                      style={{
+                        padding: '6px',
+                        textAlign: 'right',
+                        fontWeight: 900,
+                        fontSize: '12px',
+                        color: isHighOrMid ? '#166534' : '#991b1b',
+                      }}
                     >
                       {stat.rate}%
                     </td>
@@ -877,7 +908,7 @@ export const ReportsPage: React.FC = () => {
           </table>
 
           {/* Page 2 Footer */}
-          <div className="mt-8 pt-3 border-t-2 border-black flex items-center justify-between text-xs font-bold text-black">
+          <div style={{ marginTop: '24px', borderTop: '2px solid #0f172a', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>
             <span>Zen Attendance</span>
             <span>Page 2+ • End of Report</span>
           </div>
@@ -886,6 +917,7 @@ export const ReportsPage: React.FC = () => {
     </div>
   );
 };
+
 
 
 
