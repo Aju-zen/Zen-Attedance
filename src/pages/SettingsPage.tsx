@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
-import { Settings, Save, MapPin, ShieldCheck, Lock, Unlock, Play, Trash2, Download, Upload, Database, FileJson, CheckCircle2, AlertTriangle, X, RefreshCw, Layers } from 'lucide-react';
+import { Settings, Save, MapPin, ShieldCheck, Lock, Unlock, Play, Trash2, Download, Upload, Database, FileJson, CheckCircle2, AlertTriangle, X, RefreshCw, Layers, CalendarCheck } from 'lucide-react';
 import { DatabaseBackup } from '../types';
 
 export const SettingsPage: React.FC = () => {
@@ -15,6 +15,7 @@ export const SettingsPage: React.FC = () => {
     parseBackupFile,
     importBackup,
     importInitialClients,
+    importSeptemberAttendance,
   } = useApp();
 
   const [gymName, setGymName] = useState(settings.gymName || '');
@@ -30,6 +31,7 @@ export const SettingsPage: React.FC = () => {
   const [isSeeding, setIsSeeding] = useState(false);
   const [isDeletingMock, setIsDeletingMock] = useState(false);
   const [isImportingRoster, setIsImportingRoster] = useState(false);
+  const [isImportingAttendance, setIsImportingAttendance] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<DatabaseBackup | null>(null);
@@ -43,6 +45,15 @@ export const SettingsPage: React.FC = () => {
     setIsImportingRoster(true);
     await importInitialClients();
     setIsImportingRoster(false);
+  };
+
+  const handleImportSeptAttendance = async () => {
+    if (!window.confirm('Import attendance records for Sept 1 to Sept 9 (164 attendance entries across 75 clients)?')) {
+      return;
+    }
+    setIsImportingAttendance(true);
+    await importSeptemberAttendance();
+    setIsImportingAttendance(false);
   };
 
   // 1. Save general settings
@@ -489,11 +500,21 @@ export const SettingsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleImportRoster}
-                    disabled={isImportingRoster || isSeeding || isDeletingMock}
+                    disabled={isImportingRoster || isImportingAttendance || isSeeding || isDeletingMock}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-extrabold text-emerald-700 dark:text-emerald-300 shadow-2xs hover:bg-emerald-500/20 cursor-pointer disabled:opacity-50 transition"
                   >
                     <Layers className="h-4 w-4 text-emerald-500" />
                     {isImportingRoster ? 'Importing 75 Clients...' : 'Import 75 Client Roster'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleImportSeptAttendance}
+                    disabled={isImportingAttendance || isImportingRoster || isSeeding || isDeletingMock}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 text-xs font-extrabold text-indigo-700 dark:text-indigo-300 shadow-2xs hover:bg-indigo-500/20 cursor-pointer disabled:opacity-50 transition"
+                  >
+                    <CalendarCheck className="h-4 w-4 text-indigo-500" />
+                    {isImportingAttendance ? 'Importing Attendance...' : 'Import Sept 1-9 Attendance'}
                   </button>
 
                   <button

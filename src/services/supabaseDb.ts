@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup } from '../types';
 import { GymDB } from './db';
-import { INITIAL_CLIENT_DATA, INITIAL_CUSTOM_MEMBERSHIP_ORDER } from '../data/initialClients';
+import { INITIAL_CLIENT_DATA, INITIAL_CUSTOM_MEMBERSHIP_ORDER, INITIAL_SEPTEMBER_ATTENDANCE } from '../data/initialClients';
 
 let cachedClient: SupabaseClient | null = null;
 let cachedUrl = '';
@@ -315,7 +315,91 @@ export const supabaseDb: GymDB = {
       }
     }
 
+    // Auto-import September 1 to 9 Attendance
+    try {
+      await this.importSeptemberAttendance();
+    } catch (attErr) {
+      console.warn('Auto import September attendance warning:', attErr);
+    }
+
     return { count: INITIAL_CLIENT_DATA.length };
+  },
+
+  async importSeptemberAttendance(): Promise<{ count: number; totalRecords: number }> {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase client not initialized');
+
+    // 1. Fetch all clients to map membership_number -> client id
+    const { data: allClients, error: clientErr } = await supabase
+      .from('clients')
+      .select('id, membership_number');
+
+    if (clientErr) throw clientErr;
+
+    const clientMap = new Map<string, string>();
+    (allClients || []).forEach((c: any) => {
+      clientMap.set(c.membership_number, c.id);
+    });
+
+    const dates = [
+      '2026-09-01',
+      '2026-09-02',
+      '2026-09-03',
+      '2026-09-04',
+      '2026-09-05',
+      '2026-09-06',
+      '2026-09-07',
+      '2026-09-08',
+      '2026-09-09',
+    ];
+
+    // Build map of (membership_number -> Set of Present dates)
+    const presentMap = new Map<string, Set<string>>();
+    INITIAL_SEPTEMBER_ATTENDANCE.forEach((rec) => {
+      presentMap.set(rec.membership_number, new Set(rec.dates));
+    });
+
+    const attendanceRows: any[] = [];
+    const timestamp = new Date().toISOString();
+
+    for (const [memNo, clientId] of clientMap.entries()) {
+      const pSet = presentMap.get(memNo);
+      for (const d of dates) {
+        const isPresent = pSet ? pSet.has(d) : false;
+        attendanceRows.push({
+          client_id: clientId,
+          date: d,
+          status: isPresent ? 'Present' : 'Absent',
+          marked_at: timestamp,
+        });
+      }
+    }
+
+    // Upsert attendance in chunks of 100
+    const chunkArray = <T>(arr: T[], size: number): T[][] => {
+      const chunks: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+      }
+      return chunks;
+    };
+
+    const chunks = chunkArray(attendanceRows, 100);
+    for (const chunk of chunks) {
+      const { error: upsertErr } = await supabase
+        .from('attendance')
+        .upsert(chunk, { onConflict: 'client_id,date' });
+
+      if (upsertErr) {
+        console.error('Error upserting September attendance chunk:', upsertErr);
+        throw upsertErr;
+      }
+    }
+
+    return {
+      count: INITIAL_SEPTEMBER_ATTENDANCE.length,
+      totalRecords: attendanceRows.length,
+    };
   },
 
   async getAttendance(date): Promise<Attendance[]> {

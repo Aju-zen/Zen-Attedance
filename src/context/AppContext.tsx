@@ -33,6 +33,7 @@ interface AppContextType {
   parseBackupFile: (file: File) => Promise<DatabaseBackup>;
   importBackup: (backupData: DatabaseBackup, mode?: 'merge' | 'replace') => Promise<boolean>;
   importInitialClients: () => Promise<boolean>;
+  importSeptemberAttendance: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -467,6 +468,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const importSeptemberAttendance = async (): Promise<boolean> => {
+    try {
+      const res = await db.importSeptemberAttendance();
+      addNotification(
+        'success',
+        `Successfully imported September 1-9 attendance (${res.totalRecords} records across ${res.count} clients)!`
+      );
+      if (selectedDate) {
+        await loadAttendance(selectedDate);
+      }
+      return true;
+    } catch (e: any) {
+      console.error('Import September attendance error:', e);
+      addNotification('error', `Failed to import September attendance: ${e.message || 'Unknown error'}`);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -499,6 +518,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         parseBackupFile,
         importBackup,
         importInitialClients,
+        importSeptemberAttendance,
       }}
     >
       {children}

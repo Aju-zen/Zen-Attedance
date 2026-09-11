@@ -1,4 +1,4 @@
-﻿export interface RawClientInput {
+export interface RawClientInput {
   membership_number: string;
   name: string;
   membership_end: string;
@@ -85,3 +85,87 @@ export const INITIAL_CLIENT_DATA: RawClientInput[] = [
 export const INITIAL_CUSTOM_MEMBERSHIP_ORDER: string[] = INITIAL_CLIENT_DATA.map(
   (c) => c.membership_number
 );
+
+export interface InitialAttendanceRecord {
+  membership_number: string;
+  dates: string[];
+}
+
+export const INITIAL_SEPTEMBER_ATTENDANCE: InitialAttendanceRecord[] = [
+  { membership_number: '20', dates: ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05'] },
+  { membership_number: '28', dates: [] },
+  { membership_number: '58', dates: [] },
+  { membership_number: '70', dates: ['2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '84', dates: ['2026-09-03'] },
+  { membership_number: '90', dates: ['2026-09-01', '2026-09-02', '2026-09-03'] },
+  { membership_number: '97', dates: ['2026-09-01', '2026-09-03', '2026-09-07'] },
+  { membership_number: '105', dates: [] },
+  { membership_number: '140', dates: [] },
+  { membership_number: '143', dates: [] },
+  { membership_number: '152', dates: ['2026-09-01', '2026-09-02', '2026-09-07'] },
+  { membership_number: '153', dates: ['2026-09-03', '2026-09-07'] },
+  { membership_number: '162', dates: ['2026-09-02', '2026-09-03', '2026-09-05', '2026-09-07'] },
+  { membership_number: '178', dates: ['2026-09-08'] },
+  { membership_number: '214', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '217', dates: [] },
+  { membership_number: '218', dates: ['2026-09-02', '2026-09-03', '2026-09-07'] },
+  { membership_number: '240', dates: ['2026-09-01', '2026-09-02', '2026-09-04', '2026-09-07'] },
+  { membership_number: '250', dates: [] },
+  { membership_number: '284', dates: ['2026-09-01', '2026-09-02'] },
+  { membership_number: '289', dates: ['2026-09-03', '2026-09-04', '2026-09-05', '2026-09-07', '2026-09-08'] },
+  { membership_number: '293', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-07'] },
+  { membership_number: '298', dates: ['2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '303', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-07'] },
+  { membership_number: '310', dates: ['2026-09-01', '2026-09-02', '2026-09-04', '2026-09-05', '2026-09-07', '2026-09-08'] },
+  { membership_number: '315', dates: [] },
+  { membership_number: '331', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-08'] },
+  { membership_number: '332', dates: [] },
+  { membership_number: '351', dates: ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05'] },
+  { membership_number: '352', dates: ['2026-09-01', '2026-09-02'] },
+  { membership_number: '355', dates: [] },
+  { membership_number: '359', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-05'] },
+  { membership_number: '360', dates: ['2026-09-02', '2026-09-07'] },
+  { membership_number: '361', dates: [] },
+  { membership_number: '362', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '363', dates: ['2026-09-04'] },
+  { membership_number: '367', dates: ['2026-09-01'] },
+  { membership_number: '372', dates: ['2026-09-02', '2026-09-03', '2026-09-07'] },
+  { membership_number: '373', dates: ['2026-09-02', '2026-09-03', '2026-09-07'] },
+  { membership_number: '374', dates: [] },
+  { membership_number: '380', dates: [] },
+  { membership_number: '383', dates: ['2026-09-02', '2026-09-03', '2026-09-07'] },
+  { membership_number: '394', dates: [] },
+  { membership_number: '396', dates: [] },
+  { membership_number: '397', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '399', dates: [] },
+  { membership_number: '400', dates: ['2026-09-02', '2026-09-03'] },
+  { membership_number: '401', dates: [] },
+  { membership_number: '402', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-07'] },
+  { membership_number: '404', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '406', dates: ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-07', '2026-09-08'] },
+  { membership_number: '407', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-07'] },
+  { membership_number: '410', dates: ['2026-09-01', '2026-09-02'] },
+  { membership_number: '411', dates: ['2026-09-02', '2026-09-03', '2026-09-07'] },
+  { membership_number: '412', dates: [] },
+  { membership_number: '413', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-05'] },
+  { membership_number: '415', dates: ['2026-09-07'] },
+  { membership_number: '416', dates: [] },
+  { membership_number: '420', dates: [] },
+  { membership_number: '421', dates: [] },
+  { membership_number: '423', dates: ['2026-09-01', '2026-09-02', '2026-09-03'] },
+  { membership_number: '425', dates: ['2026-09-01', '2026-09-02', '2026-09-04'] },
+  { membership_number: '426', dates: ['2026-09-02'] },
+  { membership_number: '428', dates: ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05'] },
+  { membership_number: '429', dates: ['2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '436', dates: ['2026-09-02'] },
+  { membership_number: '441', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'] },
+  { membership_number: '443', dates: [] },
+  { membership_number: '445', dates: [] },
+  { membership_number: '448', dates: ['2026-09-01'] },
+  { membership_number: '451', dates: ['2026-09-01', '2026-09-02', '2026-09-07'] },
+  { membership_number: '452', dates: ['2026-09-01', '2026-09-02', '2026-09-03'] },
+  { membership_number: '453', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-07'] },
+  { membership_number: '454', dates: ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-08'] },
+  { membership_number: '458', dates: [] }
+];
+
