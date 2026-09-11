@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { db } from '../services/db';
 import { Attendance } from '../types';
-import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone, Menu, ArrowUpDown } from 'lucide-react';
+import { Search, Check, X, Calendar, CalendarRange, Maximize2, Minimize2, Smartphone, Menu, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 
 export const AttendancePage: React.FC = () => {
@@ -162,6 +162,57 @@ export const AttendancePage: React.FC = () => {
     } catch (e) {
       console.error('Error saving custom client order:', e);
     }
+  };
+
+  // Move client 1 step up or down (ideal for mobile one-tap reordering)
+  const moveClient = (clientId: string, direction: 'up' | 'down') => {
+    const order = [...effectiveOrder];
+    const index = order.indexOf(clientId);
+    if (index === -1) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= order.length) return;
+
+    const temp = order[index];
+    order[index] = order[targetIndex];
+    order[targetIndex] = temp;
+
+    setCustomOrder(order);
+    try {
+      localStorage.setItem('zen_custom_client_order', JSON.stringify(order));
+    } catch (e) {
+      console.error('Error saving custom client order:', e);
+    }
+  };
+
+  // Touch Drag-and-Drop for Mobile
+  const touchSourceRef = useRef<string | null>(null);
+
+  const handleTouchStart = (clientId: string) => {
+    touchSourceRef.current = clientId;
+    setDraggedClientId(clientId);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchSourceRef.current) return;
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const rowEl = el?.closest('[data-client-id]');
+    if (rowEl) {
+      const targetId = rowEl.getAttribute('data-client-id');
+      if (targetId && targetId !== touchSourceRef.current) {
+        setDragOverClientId(targetId);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchSourceRef.current && dragOverClientId && touchSourceRef.current !== dragOverClientId) {
+      handleReorder(touchSourceRef.current, dragOverClientId);
+    }
+    touchSourceRef.current = null;
+    setDraggedClientId(null);
+    setDragOverClientId(null);
   };
 
   // Filter and Sort clients
@@ -339,21 +390,22 @@ export const AttendancePage: React.FC = () => {
       )}
 
       {/* 2. Top Bar (Streamlined for Fullscreen and Normal Views) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 shrink-0">
-        {/* Search & Status Filters */}
-        <div className="flex flex-1 items-center gap-2 min-w-[260px]">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Search client or membership #..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200 bg-white pl-8.5 pr-3 py-1.5 text-xs sm:text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:bg-zinc-900"
-            />
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 shrink-0">
+        {/* Search Bar */}
+        <div className="relative w-full md:w-80 lg:w-96 shrink-0">
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search client or membership #..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-zinc-200 bg-white pl-8.5 pr-3 py-1.5 text-xs sm:text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:bg-zinc-900"
+          />
+        </div>
 
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5 shrink-0">
+        {/* Filter Categories Bar (Horizontal scroll on mobile with no overflow) */}
+        <div className="flex items-center justify-between md:justify-end gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          <div className="flex items-center gap-1 shrink-0">
             {/* 1. Custom Order (First & Default) */}
             <button
               onClick={() => setStatusFilter('custom')}
@@ -455,34 +507,34 @@ export const AttendancePage: React.FC = () => {
               )}
             </button>
           </div>
-        </div>
 
-        {/* Fullscreen Active Header Actions */}
-        {isFullScreen && (
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg">
-              {dateMode === 'single' ? selectedDate : `${earliestDate} → ${latestDate}`}
-            </span>
-            <button
-              type="button"
-              onClick={() => setIsFullScreen(false)}
-              className="flex items-center gap-1 px-3 py-1 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-bold transition cursor-pointer shadow-xs"
-              title="Exit Full Screen"
-            >
-              <Minimize2 className="h-3.5 w-3.5 text-emerald-400" />
-              Exit Fullscreen
-            </button>
-          </div>
-        )}
+          {/* Fullscreen Active Header Actions */}
+          {isFullScreen && (
+            <div className="flex items-center gap-2 shrink-0 ml-auto md:ml-2">
+              <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg hidden sm:inline">
+                {dateMode === 'single' ? selectedDate : `${earliestDate} → ${latestDate}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsFullScreen(false)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-bold transition cursor-pointer shadow-xs shrink-0"
+                title="Exit Full Screen"
+              >
+                <Minimize2 className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Exit Fullscreen</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Reorder Guidance Banner */}
       {isEditingOrder && statusFilter === 'custom' && (
-        <div className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-semibold shrink-0 animate-in fade-in slide-in-from-top-1">
+        <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-semibold shrink-0 animate-in fade-in slide-in-from-top-1">
           <div className="flex items-center gap-2">
             <Menu className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <span>
-              <strong>Reorder Mode Active:</strong> Drag and drop any client row using the <strong>3-line icon (☰)</strong> next to their name to rearrange order.
+              <strong>Reorder Mode Active:</strong> Drag <strong>(☰)</strong> or tap <strong>(▲ / ▼)</strong> next to any member to rearrange.
             </span>
           </div>
           <button
@@ -582,6 +634,7 @@ export const AttendancePage: React.FC = () => {
                   return (
                     <tr
                       key={client.id}
+                      data-client-id={client.id}
                       draggable={isEditingOrder && statusFilter === 'custom'}
                       onDragStart={(e) => {
                         if (isEditingOrder && statusFilter === 'custom') {
@@ -626,15 +679,38 @@ export const AttendancePage: React.FC = () => {
                       }`}
                     >
                       {/* Left Frozen Column: Membership Number & Name in Same Line */}
-                      <td className="sticky left-0 z-20 bg-white dark:bg-zinc-900 px-4 py-2.5 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-100 dark:border-zinc-800 min-w-[220px] max-w-[280px]">
+                      <td className="sticky left-0 z-20 bg-white dark:bg-zinc-900 px-3 sm:px-4 py-2.5 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.08)] border-r border-zinc-100 dark:border-zinc-800 min-w-[220px] max-w-[290px]">
                         <div className="flex items-center gap-2 overflow-hidden">
-                          {/* 3-line icon handle when in Edit Order mode */}
+                          {/* 3-line icon handle & Up/Down buttons when in Edit Order mode */}
                           {isEditingOrder && statusFilter === 'custom' && (
-                            <div
-                              className="flex items-center justify-center p-1 rounded-md text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 cursor-grab active:cursor-grabbing shrink-0"
-                              title="Click and drag to reorder member"
-                            >
-                              <Menu className="h-3.5 w-3.5 stroke-[2.5]" />
+                            <div className="flex items-center gap-1 shrink-0">
+                              <div
+                                onTouchStart={() => handleTouchStart(client.id)}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                                className="flex items-center justify-center p-1.5 rounded-lg text-amber-700 dark:text-amber-300 bg-amber-500/15 hover:bg-amber-500/25 active:bg-amber-500/35 cursor-grab active:cursor-grabbing touch-none select-none"
+                                title="Click/touch and drag to reorder member"
+                              >
+                                <Menu className="h-4 w-4 stroke-[2.5]" />
+                              </div>
+                              <div className="flex flex-col -space-y-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => moveClient(client.id, 'up')}
+                                  className="p-0.5 rounded text-zinc-400 hover:text-amber-600 hover:bg-amber-500/15 dark:hover:text-amber-400 dark:hover:bg-zinc-800 transition active:scale-90 cursor-pointer"
+                                  title="Move up"
+                                >
+                                  <ChevronUp className="h-3.5 w-3.5 stroke-[2.5]" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveClient(client.id, 'down')}
+                                  className="p-0.5 rounded text-zinc-400 hover:text-amber-600 hover:bg-amber-500/15 dark:hover:text-amber-400 dark:hover:bg-zinc-800 transition active:scale-90 cursor-pointer"
+                                  title="Move down"
+                                >
+                                  <ChevronDown className="h-3.5 w-3.5 stroke-[2.5]" />
+                                </button>
+                              </div>
                             </div>
                           )}
                           <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-500/15 px-2 py-0.5 rounded-md shrink-0">
