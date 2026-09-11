@@ -19,6 +19,14 @@ export interface Attendance {
   device_fingerprint?: string; // Present if marked via self check-in
 }
 
+export interface LeaderboardEntry {
+  rank: number;
+  clientId: string;
+  name: string;
+  membershipNumber: string;
+  presentDays: number;
+}
+
 export interface MembershipHistory {
   id: string;
   client_id: string;

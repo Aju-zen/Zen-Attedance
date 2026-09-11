@@ -1,7 +1,9 @@
-import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup } from '../types';
+import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup, LeaderboardEntry } from '../types';
 import { supabaseDb } from './supabaseDb';
 
 export interface GymDB {
+  // Leaderboard
+  getLeaderboard(): Promise<{ top10: LeaderboardEntry[]; allRanked: LeaderboardEntry[] }>;
   // Clients
   getClients(): Promise<Client[]>;
   addClient(client: {

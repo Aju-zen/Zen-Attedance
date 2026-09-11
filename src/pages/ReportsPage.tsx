@@ -4,7 +4,6 @@ import { db } from '../services/db';
 import { Attendance, Client } from '../types';
 import {
   BarChart3,
-  Download,
   Printer,
   Users,
   TrendingUp,
@@ -299,35 +298,6 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
-  // Export to CSV (Formatted 4-column report)
-  const exportExcel = () => {
-    let csvContent = '\uFEFF'; // UTF-8 BOM
-    csvContent += `"${settings.gymName} - Attendance Report"\r\n`;
-    csvContent += `"Date Range","From ${formatDatePretty(startDate)} to ${formatDatePretty(endDate)}"\r\n`;
-    csvContent += `"Total Duration","${durationDays} Operating Days (Excl. Sundays)"\r\n`;
-    csvContent += `"Generated On","${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}"\r\n\r\n`;
-    csvContent += 'Client Name,Days Present,Days Absent,Attendance Rate (%)\r\n';
-
-    filteredAndSortedStats.forEach(s => {
-      const clientName = s.client.membership_number
-        ? `${s.client.name} (${s.client.membership_number})`
-        : s.client.name;
-      csvContent += `"${clientName.replace(/"/g, '""')}",${s.present},${s.absent},${s.rate}%\r\n`;
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute(
-      'download',
-      `${settings.gymName.replace(/\s+/g, '_')}_Attendance_Report_${startDate}_to_${endDate}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   // Print handler that ensures document.title is "Zen Attendance" during print
   const handlePrint = () => {
     const originalTitle = document.title;
@@ -358,13 +328,6 @@ export const ReportsPage: React.FC = () => {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={exportExcel}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4.5 py-2.5 text-sm font-bold text-zinc-700 shadow-2xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
-            >
-              <Download className="h-4.5 w-4.5 text-emerald-500" />
-              Excel Export
-            </button>
             <button
               onClick={handlePrint}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4.5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 cursor-pointer transition-colors"

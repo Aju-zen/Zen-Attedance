@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup } from '../types';
+import { Client, Attendance, MembershipHistory, GymSettings, DatabaseBackup, LeaderboardEntry } from '../types';
 import { GymDB } from './db';
 import { INITIAL_CLIENT_DATA, INITIAL_CUSTOM_MEMBERSHIP_ORDER, INITIAL_SEPTEMBER_ATTENDANCE } from '../data/initialClients';
 
@@ -695,6 +695,60 @@ export const supabaseDb: GymDB = {
         subscription_alert,
       },
     };
+  },
+
+  async getLeaderboard(): Promise<{ top10: LeaderboardEntry[]; allRanked: LeaderboardEntry[] }> {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Supabase client not initialized');
+
+    // 1. Fetch all clients
+    const { data: clients, error: clientErr } = await supabase
+      .from('clients')
+      .select('id, name, membership_number');
+
+    if (clientErr) throw clientErr;
+
+    // 2. Fetch all Present attendance records
+    const { data: attendance, error: attErr } = await supabase
+      .from('attendance')
+      .select('client_id')
+      .eq('status', 'Present');
+
+    if (attErr) throw attErr;
+
+    // Count present days per client
+    const countMap = new Map<string, number>();
+    (attendance || []).forEach((a: any) => {
+      countMap.set(a.client_id, (countMap.get(a.client_id) || 0) + 1);
+    });
+
+    // Build list
+    const clientList = (clients || []).map((c: any) => ({
+      clientId: c.id,
+      name: c.name,
+      membershipNumber: c.membership_number,
+      presentDays: countMap.get(c.id) || 0,
+    }));
+
+    // Sort by presentDays descending, then name ascending
+    clientList.sort((a, b) => {
+      if (b.presentDays !== a.presentDays) {
+        return b.presentDays - a.presentDays;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    // Assign rank
+    const allRanked: LeaderboardEntry[] = clientList.map((item, index) => ({
+      rank: index + 1,
+      clientId: item.clientId,
+      name: item.name,
+      membershipNumber: item.membershipNumber,
+      presentDays: item.presentDays,
+    }));
+
+    const top10 = allRanked.slice(0, 10);
+    return { top10, allRanked };
   },
 
   async clearTestDeviceHistory(deviceFingerprint: string): Promise<void> {
