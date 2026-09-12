@@ -197,7 +197,7 @@ export const CheckInPage: React.FC = () => {
             Welcome to <span className="text-emerald-400">Zen Attendance</span>
           </h1>
           <p className="text-xs sm:text-sm font-semibold text-zinc-400 tracking-wide max-w-xs mx-auto">
-            {gymSettings.gymName ? `${gymSettings.gymName} • Self Check-In Portal` : 'Fast & Seamless Self Check-In'}
+            {gymSettings.gymName || 'Fast & Seamless Self Check-In'}
           </p>
         </div>
 
@@ -494,12 +494,9 @@ export const CheckInPage: React.FC = () => {
                 )}
               </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-center tracking-tight text-white mb-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-center tracking-tight text-white mb-3">
               {gymSettings.gymName || 'Zen Attendance'}
             </h1>
-            <span className="text-[10px] font-bold tracking-wider uppercase px-3 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
-              Self Check-In Portal
-            </span>
 
             {/* View Leaderboard Button directly above Self Check-In text */}
             <button
