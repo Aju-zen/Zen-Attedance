@@ -297,14 +297,18 @@ export const CheckInPage: React.FC = () => {
   const activeUserMem = (membershipNumber || localStorage.getItem('client_saved_membership') || '').trim().toLowerCase();
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-zinc-100 relative">
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-zinc-100 relative overflow-hidden selection:bg-emerald-500 selection:text-zinc-950">
+      {/* Background Ambient Glows (Super lightweight, GPU accelerated) */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl h-96 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-500/5 via-transparent to-transparent pointer-events-none"></div>
 
       {/* Top Action Bar */}
       {gymSettings.enableTestMode && (
-        <div className="absolute top-4 right-4 flex items-center gap-2">
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
           <button
             onClick={handleClearTestData}
-            className="bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-mono transition-colors"
+            className="bg-zinc-900/90 border border-zinc-700/80 text-zinc-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-mono transition-colors shadow-sm"
             title="Clear device history for testing"
           >
             [Dev: Reset Test Data]
@@ -316,25 +320,28 @@ export const CheckInPage: React.FC = () => {
       {/* 1. STANDALONE LEADERBOARD VIEW (Top 10 + Current User Position Fallback)    */}
       {/* ========================================================================= */}
       {showLeaderboardView ? (
-        <div className="bg-zinc-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-lg border border-zinc-700 transition-all space-y-5">
+        <div className="relative bg-zinc-900/85 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.06)] w-full max-w-lg border border-zinc-800/80 transition-all space-y-5">
+          {/* Top subtle highlight */}
+          <div className="absolute inset-x-12 top-0 h-px bg-linear-to-r from-transparent via-amber-500/40 to-transparent"></div>
+
           {/* Header - Only one back button on top left */}
-          <div className="flex items-center justify-between border-b border-zinc-700 pb-3">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
             <button
               onClick={() => setShowLeaderboardView(false)}
-              className="flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-700/60 hover:bg-zinc-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-800 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors cursor-pointer shadow-xs"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Back to Check-In</span>
             </button>
 
-            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 px-2.5 py-1 rounded-md border border-amber-500/30">
+            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 px-2.5 py-1 rounded-lg border border-amber-500/30 shadow-xs">
               {currentMonthName}
             </span>
           </div>
 
           {/* Title Banner */}
-          <div className="text-center space-y-1">
-            <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-amber-400/15 text-amber-400 mb-1 border border-amber-400/30 shadow-lg shadow-amber-500/10">
+          <div className="text-center space-y-1.5">
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-amber-400/15 text-amber-400 mb-1 border border-amber-400/30 shadow-lg shadow-amber-500/10">
               <Trophy className="h-6 w-6 animate-pulse" />
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -353,7 +360,7 @@ export const CheckInPage: React.FC = () => {
             </div>
           ) : leaderboardData.top10.length > 0 ? (
             <div className="space-y-3">
-              <div className="bg-zinc-900 rounded-xl border border-zinc-700/80 divide-y divide-zinc-800 overflow-hidden">
+              <div className="bg-zinc-950/80 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/60 overflow-hidden shadow-inner">
                 {leaderboardData.top10.map((entry) => {
                   const isCurrentClient =
                     activeUserMem &&
@@ -363,28 +370,28 @@ export const CheckInPage: React.FC = () => {
                   return (
                     <div
                       key={entry.clientId}
-                      className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${isCurrentClient
-                          ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
-                          : 'hover:bg-zinc-800/50'
+                      className={`flex items-center justify-between px-4 py-3 transition-all text-xs ${isCurrentClient
+                        ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
+                        : 'hover:bg-zinc-900/60'
                         }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         {/* Rank Badge */}
                         <span
                           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${entry.rank === 1
-                              ? 'bg-amber-400 text-zinc-950 shadow-xs'
-                              : entry.rank === 2
-                                ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                                : entry.rank === 3
-                                  ? 'bg-amber-700 text-white shadow-xs'
-                                  : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                            ? 'bg-amber-400 text-zinc-950 shadow-xs'
+                            : entry.rank === 2
+                              ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                              : entry.rank === 3
+                                ? 'bg-amber-700 text-white shadow-xs'
+                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
                             }`}
                         >
                           {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
                         </span>
 
                         <div className="truncate">
-                          <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200'}`}>
+                          <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200 font-medium'}`}>
                             {entry.name}
                           </span>
                           {entry.membershipNumber && (
@@ -393,15 +400,15 @@ export const CheckInPage: React.FC = () => {
                             </span>
                           )}
                           {isCurrentClient && (
-                            <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded">
+                            <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
                               You
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-extrabold text-emerald-400">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="font-extrabold text-emerald-400 text-sm">
                           {entry.presentDays}
                         </span>
                         <span className="text-[10px] text-zinc-500">days</span>
@@ -432,7 +439,7 @@ export const CheckInPage: React.FC = () => {
                       <Flame className="h-3.5 w-3.5 text-amber-500" />
                       <span>Your Current Position</span>
                     </div>
-                    <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-500/15 border-2 border-emerald-500/50 text-xs">
+                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/40 text-xs shadow-md">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-zinc-950 font-black text-xs">
                           #{userEntry.rank}
@@ -444,14 +451,14 @@ export const CheckInPage: React.FC = () => {
                           <span className="text-[10px] text-emerald-400/80 ml-1.5 font-mono">
                             (#{userEntry.membershipNumber})
                           </span>
-                          <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded">
+                          <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
                             You
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-extrabold text-emerald-400">
+                        <span className="font-extrabold text-emerald-400 text-sm">
                           {userEntry.presentDays}
                         </span>
                         <span className="text-[10px] text-emerald-400/80">days</span>
@@ -471,21 +478,27 @@ export const CheckInPage: React.FC = () => {
         /* ========================================================================= */
         /* 2. REGULAR CHECK-IN FLOW                                                  */
         /* ========================================================================= */
-        <div className={`bg-zinc-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full border border-zinc-700 transition-all ${step === 'success' ? 'max-w-lg' : 'max-w-md'
+        <div className={`relative bg-zinc-900/85 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.06)] w-full border border-zinc-800/80 transition-all ${step === 'success' ? 'max-w-lg' : 'max-w-md'
           }`}>
+          {/* Top subtle highlight */}
+          <div className="absolute inset-x-12 top-0 h-px bg-linear-to-r from-transparent via-emerald-500/40 to-transparent"></div>
+
           <div className="flex flex-col items-center mb-6 sm:mb-8">
-            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/30 overflow-hidden shrink-0">
-              {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
-                <img src={gymSettings.logoUrl} alt="Gym Logo" className="h-full w-full object-cover" />
-              ) : (
-                <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-1.5" />
-              )}
+            <div className="relative mb-3 group">
+              <div className="absolute -inset-1.5 bg-linear-to-r from-emerald-500/30 to-teal-500/30 rounded-2xl blur-md opacity-75 group-hover:opacity-100 transition duration-500"></div>
+              <div className="relative w-18 h-18 rounded-2xl bg-zinc-950 p-2 border border-emerald-500/30 shadow-xl flex items-center justify-center overflow-hidden">
+                {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
+                  <img src={gymSettings.logoUrl} alt="Gym Logo" className="h-full w-full object-cover rounded-xl" />
+                ) : (
+                  <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-1" />
+                )}
+              </div>
             </div>
-            <h1 className="text-3xl font-extrabold text-center tracking-tight text-white mb-0.5">
-              {gymSettings.gymName}
+            <h1 className="text-2xl sm:text-3xl font-black text-center tracking-tight text-white mb-1">
+              {gymSettings.gymName || 'Zen Attendance'}
             </h1>
-            <span className="text-xs font-semibold text-zinc-400 mb-3">
-              Zen Tracker
+            <span className="text-[10px] font-bold tracking-wider uppercase px-3 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
+              Self Check-In Portal
             </span>
 
             {/* View Leaderboard Button directly above Self Check-In text */}
@@ -495,34 +508,46 @@ export const CheckInPage: React.FC = () => {
                 setShowLeaderboardView(true);
                 fetchLeaderboard();
               }}
-              className="inline-flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/40 hover:bg-amber-500/25 active:scale-98 text-amber-300 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer mb-3"
+              className="group inline-flex items-center gap-2 bg-linear-to-r from-amber-500/10 via-amber-500/15 to-amber-500/10 hover:from-amber-500/20 hover:to-amber-500/20 active:scale-95 text-amber-300 px-4 py-1.5 rounded-full text-xs font-bold border border-amber-500/30 hover:border-amber-400/60 transition-all shadow-sm cursor-pointer mb-3"
             >
-              <Trophy className="h-3.5 w-3.5 text-amber-400 animate-bounce" />
+              <Trophy className="h-3.5 w-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
               <span>View Leaderboard</span>
             </button>
 
-            <h2 className="text-xl font-bold text-center text-emerald-400 mb-1">Self Check-In</h2>
-            <p className="text-zinc-400 text-sm">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <h2 className="text-lg sm:text-xl font-black text-center text-emerald-400 mb-1">Self Check-In</h2>
+            <p className="text-zinc-400 text-xs font-medium flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
           </div>
 
           {step === 'verifying' && (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500 mb-4"></div>
-              <p className="text-zinc-300">Verifying your location...</p>
+            <div className="flex flex-col items-center justify-center py-8 space-y-3">
+              <div className="relative flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 animate-ping absolute"></div>
+                <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/20">
+                  <div className="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-white">Verifying Location</p>
+                <p className="text-xs text-zinc-400">Confirming you are inside the gym...</p>
+              </div>
             </div>
           )}
 
           {step === 'input' && (
-            <form onSubmit={handleCheckIn} className="space-y-6">
-              <div className="flex items-center justify-center space-x-2 text-emerald-400 bg-emerald-400/10 p-3 rounded-lg border border-emerald-400/20 mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-sm font-medium">You are in the gym</span>
+            <form onSubmit={handleCheckIn} className="space-y-5">
+              <div className="flex items-center justify-center gap-2 text-emerald-400 bg-emerald-500/10 py-2.5 px-4 rounded-xl border border-emerald-500/20 mb-6 text-xs font-bold shadow-inner">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Location Verified • You are inside the gym</span>
               </div>
 
-              <div>
-                <label htmlFor="membership" className="block text-sm font-medium text-zinc-300 mb-2">
+              <div className="space-y-2 text-left">
+                <label htmlFor="membership" className="block text-xs font-bold uppercase tracking-wider text-zinc-400">
                   Membership Number
                 </label>
                 <input
@@ -530,78 +555,94 @@ export const CheckInPage: React.FC = () => {
                   type="text"
                   value={membershipNumber}
                   onChange={(e) => handleMembershipChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-zinc-500 transition-all text-center text-lg tracking-widest uppercase font-mono"
+                  className="w-full px-4 py-3.5 bg-zinc-950/90 border border-zinc-700/80 hover:border-zinc-600 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 rounded-2xl text-white placeholder-zinc-600 transition-all text-center text-xl sm:text-2xl font-black tracking-widest uppercase font-mono shadow-inner outline-none"
                   placeholder="EG : 152"
                   required
                   disabled={submitting || failCount >= 10}
+                  autoComplete="off"
                 />
               </div>
+
               <button
                 type="submit"
                 disabled={submitting || !membershipNumber.trim() || failCount >= 10}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white font-bold py-3 px-4 rounded-lg transition-colors focus:ring-4 focus:ring-emerald-500/50 outline-none cursor-pointer"
+                className="w-full py-3.5 px-6 rounded-2xl font-black text-sm text-zinc-950 bg-linear-to-r from-emerald-400 via-emerald-500 to-teal-400 hover:from-emerald-300 hover:to-teal-300 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {submitting ? 'Processing...' : 'Check In'}
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Recording Check-In...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="h-4 w-4" />
+                    <span>Check In</span>
+                  </>
+                )}
               </button>
             </form>
           )}
 
           {step === 'error' && (
-            <div className="flex flex-col items-center py-6">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex flex-col items-center py-6 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/25 flex items-center justify-center text-rose-400 shadow-lg shadow-rose-500/10">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <p className="text-red-400 text-center font-medium mb-6 text-lg">{errorMessage}</p>
-
-              <div className="flex items-center justify-center">
-                <button
-                  onClick={() => {
-                    if (errorMessage.includes('Location') || errorMessage.includes('not inside the gym')) {
-                      requestLocation(true);
-                    } else {
-                      setStep('input');
-                    }
-                  }}
-                  className="px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors cursor-pointer text-sm font-semibold"
-                >
-                  Try Again
-                </button>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-white">Location Notice</h3>
+                <p className="text-xs sm:text-sm text-rose-300/90 max-w-xs">{errorMessage}</p>
               </div>
+
+              <button
+                onClick={() => {
+                  if (errorMessage.includes('Location') || errorMessage.includes('not inside the gym')) {
+                    requestLocation(true);
+                  } else {
+                    setStep('input');
+                  }
+                }}
+                className="px-6 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs border border-zinc-700 hover:border-zinc-600 transition-all active:scale-95 shadow-md cursor-pointer"
+              >
+                Try Again
+              </button>
             </div>
           )}
 
           {step === 'success' && (
             <div className="flex flex-col items-center py-4 space-y-6">
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-2 shadow-lg shadow-emerald-500/20">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-black text-emerald-400">Attendance Recorded</h2>
+                <h2 className="text-2xl font-black text-white">Attendance Recorded</h2>
+                <span className="text-xs text-emerald-400 font-bold mt-0.5">Checked In Successfully</span>
               </div>
 
               {/* Top Details Card */}
               {successDetails && (
-                <div className="bg-zinc-900 w-full rounded-xl p-4 border border-zinc-700 space-y-2.5 shadow-inner">
+                <div className="bg-zinc-950/80 w-full rounded-2xl p-4 border border-zinc-800/80 space-y-3 shadow-inner">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">Name:</span>
+                    <span className="text-zinc-400 text-xs font-semibold">Member Name</span>
                     <span className="font-bold text-white text-base">{successDetails.name}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">Membership:</span>
-                    <span className="font-bold text-emerald-400 uppercase tracking-wider">{successDetails.membership_number}</span>
+                    <span className="text-zinc-400 text-xs font-semibold">Membership #</span>
+                    <span className="font-mono font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                      #{successDetails.membership_number}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-zinc-400">Time:</span>
-                    <span className="font-bold text-white">{successDetails.time}</span>
+                    <span className="text-zinc-400 text-xs font-semibold">Check-In Time</span>
+                    <span className="font-bold text-white text-sm">{successDetails.time}</span>
                   </div>
                   {successDetails.subscription_alert && (
-                    <div className={`mt-3 pt-3 border-t border-zinc-800 text-center font-bold text-xs px-3 py-2 rounded-lg ${successDetails.is_expired
-                        ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
-                        : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    <div className={`mt-3 pt-3 border-t border-zinc-800/80 text-center font-bold text-xs px-3 py-2 rounded-xl ${successDetails.is_expired
+                      ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                      : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                       }`}>
                       {successDetails.subscription_alert}
                     </div>
@@ -611,10 +652,10 @@ export const CheckInPage: React.FC = () => {
 
               {/* Leaderboard Section */}
               <div className="w-full space-y-3">
-                <div className="flex items-center justify-between border-b border-zinc-700 pb-2">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
                   <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-amber-400 animate-bounce" />
-                    <h3 className="text-base font-black uppercase tracking-wider text-white">
+                    <Trophy className="h-4.5 w-4.5 text-amber-400 animate-bounce" />
+                    <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
                       {new Date().toLocaleString('en-US', { month: 'long' })} Leaderboard
                     </h3>
                   </div>
@@ -631,7 +672,7 @@ export const CheckInPage: React.FC = () => {
                 ) : (
                   <div className="space-y-2">
                     {/* Top 10 List */}
-                    <div className="bg-zinc-900 rounded-xl border border-zinc-700/80 divide-y divide-zinc-800 overflow-hidden">
+                    <div className="bg-zinc-950/80 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/60 overflow-hidden shadow-inner">
                       {leaderboardData.top10.map((entry) => {
                         const isCurrentClient =
                           successDetails?.membership_number &&
@@ -641,28 +682,28 @@ export const CheckInPage: React.FC = () => {
                         return (
                           <div
                             key={entry.clientId}
-                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${isCurrentClient
-                                ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
-                                : 'hover:bg-zinc-800/50'
+                            className={`flex items-center justify-between px-4 py-3 transition-all text-xs ${isCurrentClient
+                              ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
+                              : 'hover:bg-zinc-900/60'
                               }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               {/* Rank Badge */}
                               <span
                                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${entry.rank === 1
-                                    ? 'bg-amber-400 text-zinc-950 shadow-xs'
-                                    : entry.rank === 2
-                                      ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                                      : entry.rank === 3
-                                        ? 'bg-amber-700 text-white shadow-xs'
-                                        : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                  ? 'bg-amber-400 text-zinc-950 shadow-xs'
+                                  : entry.rank === 2
+                                    ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                                    : entry.rank === 3
+                                      ? 'bg-amber-700 text-white shadow-xs'
+                                      : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
                                   }`}
                               >
                                 {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
                               </span>
 
                               <div className="truncate">
-                                <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200'}`}>
+                                <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200 font-medium'}`}>
                                   {entry.name}
                                 </span>
                                 {entry.membershipNumber && (
@@ -671,15 +712,15 @@ export const CheckInPage: React.FC = () => {
                                   </span>
                                 )}
                                 {isCurrentClient && (
-                                  <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded">
+                                  <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
                                     You
                                   </span>
                                 )}
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="font-extrabold text-emerald-400">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="font-extrabold text-emerald-400 text-sm">
                                 {entry.presentDays}
                               </span>
                               <span className="text-[10px] text-zinc-500">days</span>
@@ -711,7 +752,7 @@ export const CheckInPage: React.FC = () => {
                             <Flame className="h-3.5 w-3.5 text-amber-500" />
                             <span>Your Current Position</span>
                           </div>
-                          <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-500/15 border-2 border-emerald-500/50 text-xs">
+                          <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/40 text-xs shadow-md">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-zinc-950 font-black text-xs">
                                 #{userEntry.rank}
@@ -723,14 +764,14 @@ export const CheckInPage: React.FC = () => {
                                 <span className="text-[10px] text-emerald-400/80 ml-1.5 font-mono">
                                   (#{userEntry.membershipNumber})
                                 </span>
-                                <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded">
+                                <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
                                   You
                                 </span>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0">
-                              <span className="font-extrabold text-emerald-400">
+                              <span className="font-extrabold text-emerald-400 text-sm">
                                 {userEntry.presentDays}
                               </span>
                               <span className="text-[10px] text-emerald-400/80">days</span>
@@ -807,7 +848,7 @@ export const CheckInPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-black text-white">
-                  Ajay R- Full Stack Developer
+                  Ajay R - Full Stack Developer
                 </h3>
                 <p className="text-xs text-zinc-400">
                   Website, App & Web Service Development

@@ -44,7 +44,7 @@ export const Sidebar: React.FC = () => {
               {settings.gymName}
             </span>
             <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500">
-              Zen Tracker
+              Zen Attendance
             </span>
           </div>
         </div>
@@ -97,7 +97,7 @@ export const Sidebar: React.FC = () => {
               {settings.gymName}
             </h1>
             <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">
-              Zen Tracker
+              Zen Attendance
             </span>
           </div>
         </div>
