@@ -291,16 +291,7 @@ export function generateAndDownloadAttendancePdf(opts: PdfReportOptions): string
   doc.drawRightText(`${opts.lowestWeekday.name} (Avg: ${opts.lowestWeekday.avg})`, rightX, patternY, 'F2', 10.5, 0.6, 0.1, 0.1);
   doc.drawLine(rightColX, patternY - 6, rightX, patternY - 6, 0.5, 0.9, 0.92, 0.94);
 
-  patternY -= 32;
-  doc.drawText('Executive Summary & Notes:', rightColX, patternY, 'F2', 10, 0.1, 0.15, 0.2);
-  patternY -= 16;
-  doc.drawText('This analytical report provides an executive overview of gym engagement,', rightColX, patternY, 'F1', 8.5, 0.3, 0.35, 0.4);
-  patternY -= 13;
-  doc.drawText('daily attendance volume, and consistency during the selected duration.', rightColX, patternY, 'F1', 8.5, 0.3, 0.35, 0.4);
-  patternY -= 13;
-  doc.drawText('Sundays are excluded from the operating duration. The complete member', rightColX, patternY, 'F1', 8.5, 0.3, 0.35, 0.4);
-  patternY -= 13;
-  doc.drawText('attendance roster begins on Page 2.', rightColX, patternY, 'F1', 8.5, 0.3, 0.35, 0.4);
+
 
   // Page 1 Footer
   doc.drawLine(leftX, 55, rightX, 55, 1, 0.2, 0.2, 0.2);
