@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db, defaultSettings } from '../services/db';
 import { GymSettings, LeaderboardEntry } from '../types';
-import { Trophy, Medal, Award, Flame, UserCheck, ArrowLeft, Search, X } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, UserCheck, ArrowLeft, Search, X, Sparkles, Globe, Smartphone, ArrowRight, Mail, Check, MessageSquare } from 'lucide-react';
 
 export const CheckInPage: React.FC = () => {
   const [step, setStep] = useState<'request_location' | 'verifying' | 'input' | 'success' | 'error'>('request_location');
@@ -24,6 +24,30 @@ export const CheckInPage: React.FC = () => {
     allRanked: LeaderboardEntry[];
   }>({ top10: [], allRanked: [] });
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+
+  // Welcome Loading Splash State (shows for ~2.4 seconds on open)
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
+
+  // Promotional Ad Contact Modal State
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactCopied, setContactCopied] = useState(false);
+
+  useEffect(() => {
+    // Show welcome screen for 2.0s, then fade out smoothly by 2.4s
+    const fadeTimer = setTimeout(() => {
+      setSplashFading(true);
+    }, 2000);
+
+    const hideTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2400);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
 
   // Fetch leaderboard data
   const fetchLeaderboard = useCallback(() => {
@@ -146,10 +170,59 @@ export const CheckInPage: React.FC = () => {
     }
   }, [location, isLoadingSettings, gymSettings, step]);
 
-  if (isLoadingSettings) {
+  if (showSplash || isLoadingSettings) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div
+        className={`min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6 text-white transition-opacity duration-400 select-none relative overflow-hidden ${
+          splashFading ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        {/* Background Ambient Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        {/* Centered Logo with Pulsing Glow */}
+        <div className="relative mb-6 z-10">
+          <div className="absolute -inset-3 bg-emerald-500/25 rounded-full blur-xl animate-pulse"></div>
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-900 border-2 border-emerald-500/40 p-3 shadow-2xl shadow-emerald-500/20 flex items-center justify-center overflow-hidden">
+            {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
+              <img
+                src={gymSettings.logoUrl}
+                alt="Gym Logo"
+                className="h-full w-full object-cover rounded-2xl"
+              />
+            ) : (
+              <img
+                src="/logo.png"
+                alt="Zen Attendance Logo"
+                className="h-full w-full object-contain p-1"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Welcome Text */}
+        <div className="text-center mb-8 z-10">
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
+            Welcome to <span className="text-emerald-400">Zen Attendance</span>
+          </h1>
+          <p className="text-xs sm:text-sm font-semibold text-zinc-400 tracking-wide max-w-xs mx-auto">
+            {gymSettings.gymName ? `${gymSettings.gymName} • Self Check-In Portal` : 'Fast & Seamless Self Check-In'}
+          </p>
+        </div>
+
+        {/* Sleek Animated Loading Bar & Status */}
+        <div className="w-52 sm:w-60 z-10 flex flex-col items-center">
+          <div className="w-full h-1.5 bg-zinc-800/90 rounded-full overflow-hidden mb-3 border border-zinc-700/50">
+            <div className="h-full bg-linear-to-r from-emerald-500 via-teal-400 to-emerald-400 rounded-full animate-pulse w-full"></div>
+          </div>
+          <div className="flex items-center gap-2 text-[11px] font-bold text-zinc-400 tracking-wider uppercase">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Opening Check-In...</span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -482,6 +555,23 @@ export const CheckInPage: React.FC = () => {
               >
                 {submitting ? 'Processing...' : 'Check In'}
               </button>
+
+              {/* Compact ad note inside check-in form */}
+              <div className="pt-2 border-t border-zinc-700/60 flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Sparkles className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-[11px] text-zinc-400 truncate">
+                    Need a custom <strong className="text-zinc-200 font-semibold">Website</strong> or <strong className="text-zinc-200 font-semibold">App</strong>?
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  className="shrink-0 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition cursor-pointer"
+                >
+                  Contact →
+                </button>
+              </div>
             </form>
           )}
 
@@ -688,6 +778,143 @@ export const CheckInPage: React.FC = () => {
               <p className="text-xs text-zinc-500 font-medium">Keep crushing your fitness goals!</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Promotional Ad Strip (Sleek, eye-catching, not a huge banner, visible to everyone) */}
+      <div className={`mt-4 w-full transition-all ${step === 'success' || showLeaderboardView ? 'max-w-lg' : 'max-w-md'}`}>
+        <div 
+          onClick={() => setShowContactModal(true)}
+          className="group cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-zinc-800/85 hover:bg-zinc-800 border border-emerald-500/25 hover:border-emerald-500/50 shadow-lg shadow-black/25 transition-all backdrop-blur-sm"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-8.5 w-8.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400 group-hover:scale-105 group-hover:bg-emerald-500/20 transition-all">
+              <Globe className="h-4 w-4 text-emerald-400" />
+            </div>
+            <div className="min-w-0 text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  Need a Website or Mobile App?
+                </span>
+                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                  Ad
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 truncate">
+                Contact for custom websites, apps & software development
+              </p>
+            </div>
+          </div>
+          
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowContactModal(true);
+            }}
+            className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-zinc-950 text-xs font-bold border border-emerald-500/30 hover:border-emerald-500 transition-all cursor-pointer shadow-xs"
+          >
+            <span>Contact</span>
+            <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* Contact & Inquiry Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative text-left">
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <Globe className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white">
+                  Custom Website & App Development
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Professional software, web & mobile solutions
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2.5 mb-5 bg-zinc-800/60 p-3.5 rounded-xl border border-zinc-700/60">
+              <div className="flex items-start gap-2 text-xs text-zinc-300">
+                <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span><strong className="text-white">Business Websites:</strong> Ultra-fast, modern responsive design for any business.</span>
+              </div>
+              <div className="flex items-start gap-2 text-xs text-zinc-300">
+                <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span><strong className="text-white">Mobile Apps:</strong> iOS & Android applications with custom features.</span>
+              </div>
+              <div className="flex items-start gap-2 text-xs text-zinc-300">
+                <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span><strong className="text-white">Custom Portals:</strong> Attendance trackers, client management & booking systems.</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
+              Want a high-quality website, mobile app, or management system tailored to your needs? Reach out directly to discuss your project:
+            </p>
+
+            <div className="space-y-2.5">
+              <a
+                href="https://wa.me/?text=Hello!%20I%20saw%20your%20ad%20on%20Zen%20Attendance%20and%20I%20am%20interested%20in%20developing%20a%20website%20or%20mobile%20app."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-md cursor-pointer"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Chat on WhatsApp</span>
+              </a>
+
+              <a
+                href="mailto:contact@zenattendance.com?subject=Website%20or%20Mobile%20App%20Development%20Inquiry&body=Hi%2C%20I%20would%20like%20to%20inquire%20about%20custom%20website%20or%20mobile%20app%20development."
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs border border-zinc-700 transition-colors cursor-pointer"
+              >
+                <Mail className="h-4 w-4 text-emerald-400" />
+                <span>Send Email Inquiry</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText('contact@zenattendance.com');
+                  setContactCopied(true);
+                  setTimeout(() => setContactCopied(false), 2500);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-semibold border border-zinc-800 transition-colors cursor-pointer"
+              >
+                {contactCopied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                    <span className="text-emerald-400">Email Copied to Clipboard!</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Copy Email (contact@zenattendance.com)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500">
+              <span>Direct Developer Contact</span>
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="font-bold text-zinc-400 hover:text-white cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
