@@ -531,11 +531,11 @@ export const CheckInPage: React.FC = () => {
         {/* Centered App Icon with Pulsing Glow */}
         <div className="relative mb-6 z-10">
           <div className="absolute -inset-3 bg-emerald-500/25 rounded-full blur-xl animate-pulse"></div>
-          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-900 border-2 border-emerald-500/40 p-2 shadow-2xl shadow-emerald-500/20 flex items-center justify-center overflow-hidden">
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-zinc-900 border-2 border-emerald-500/40 p-2 shadow-2xl shadow-emerald-500/20 flex items-center justify-center overflow-hidden">
             <img
               src="/app-icon.png"
               alt="Zen Attendance App Icon"
-              className="h-full w-full object-cover rounded-2xl"
+              className="h-full w-full object-cover rounded-full"
             />
           </div>
         </div>
@@ -720,12 +720,12 @@ export const CheckInPage: React.FC = () => {
 
           <div className="flex flex-col items-center mb-6 sm:mb-8">
             <div className="relative mb-3 group">
-              <div className="absolute -inset-1.5 bg-linear-to-r from-emerald-500/30 to-teal-500/30 rounded-2xl blur-md opacity-75 group-hover:opacity-100 transition duration-500"></div>
-              <div className="relative w-18 h-18 rounded-2xl bg-zinc-950 p-2 border border-emerald-500/30 shadow-xl flex items-center justify-center overflow-hidden">
+              <div className="absolute -inset-1 bg-linear-to-r from-emerald-500/40 to-teal-500/40 rounded-full blur-md opacity-75 group-hover:opacity-100 transition duration-500"></div>
+              <div className="relative w-20 h-20 rounded-full bg-zinc-950 p-2 border-2 border-emerald-500/35 shadow-xl flex items-center justify-center overflow-hidden">
                 {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
-                  <img src={gymSettings.logoUrl} alt="Gym Logo" className="h-full w-full object-cover rounded-xl" />
+                  <img src={gymSettings.logoUrl} alt="Gym Logo" className="h-full w-full object-cover rounded-full" />
                 ) : (
-                  <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-1" />
+                  <img src="/logo.png" alt="Logo" className="h-full w-full object-contain p-1 rounded-full" />
                 )}
               </div>
             </div>
