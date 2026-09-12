@@ -749,10 +749,10 @@ export const CheckInPage: React.FC = () => {
         </div>
       )}
 
-      {/* Simple Text: Developed by Ajay */}
+      {/* Simple Text: Designed & Developed by Ajay © 2026 */}
       <div className={`mt-4 w-full text-center transition-all ${step === 'success' || showLeaderboardView ? 'max-w-lg' : 'max-w-md'}`}>
         <span className="text-xs text-zinc-500 font-medium tracking-wide">
-          Developed by Ajay
+          Designed & Developed by Ajay © 2026
         </span>
       </div>
 
