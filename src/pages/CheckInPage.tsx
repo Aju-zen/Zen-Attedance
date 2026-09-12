@@ -1,7 +1,356 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db, defaultSettings } from '../services/db';
 import { GymSettings, LeaderboardEntry } from '../types';
-import { Trophy, Medal, Award, Flame, UserCheck, ArrowLeft, Search, X, Sparkles, Globe, Smartphone, ArrowRight, Mail, Phone, Check, MessageSquare } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, UserCheck, ArrowLeft, Search, X, Sparkles, Globe, Smartphone, ArrowRight, Mail, Phone, Check, MessageSquare, Crown } from 'lucide-react';
+
+interface LeaderboardContentProps {
+  leaderboardData: { top10: LeaderboardEntry[]; allRanked: LeaderboardEntry[] };
+  loading: boolean;
+  activeUserMem: string;
+}
+
+const LeaderboardContent: React.FC<LeaderboardContentProps> = ({
+  leaderboardData,
+  loading,
+  activeUserMem,
+}) => {
+  const cleanActiveUser = (activeUserMem || '').trim().toLowerCase();
+  const top1Days = Math.max(1, leaderboardData.top10[0]?.presentDays || 1);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="relative flex items-center justify-center mb-3">
+          <div className="w-10 h-10 rounded-full border-2 border-amber-400/30 border-t-amber-400 animate-spin"></div>
+          <Trophy className="w-4 h-4 text-amber-400 absolute" />
+        </div>
+        <span className="text-xs text-zinc-400 font-semibold tracking-wide">
+          Calculating monthly rankings...
+        </span>
+      </div>
+    );
+  }
+
+  if (leaderboardData.top10.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center px-4 bg-zinc-950/40 rounded-2xl border border-zinc-800/60">
+        <Trophy className="w-8 h-8 text-zinc-600 mb-2" />
+        <span className="text-xs font-semibold text-zinc-300">
+          No attendance recorded for this month yet.
+        </span>
+        <span className="text-[11px] text-zinc-500 mt-0.5">
+          Be the first member to check in and claim the #1 spot!
+        </span>
+      </div>
+    );
+  }
+
+  const showPodium = leaderboardData.top10.length >= 3;
+  const top3 = leaderboardData.top10.slice(0, 3);
+  const ranks4to10 = showPodium ? leaderboardData.top10.slice(3) : leaderboardData.top10;
+
+  // Active user position
+  const isInTop10 = cleanActiveUser
+    ? leaderboardData.top10.some(
+        (e) => String(e.membershipNumber).trim().toLowerCase() === cleanActiveUser
+      )
+    : false;
+
+  const userEntry =
+    cleanActiveUser && !isInTop10
+      ? leaderboardData.allRanked.find(
+          (e) => String(e.membershipNumber).trim().toLowerCase() === cleanActiveUser
+        )
+      : null;
+
+  const cutoffDays = leaderboardData.top10[leaderboardData.top10.length - 1]?.presentDays || 0;
+  const daysToTop10 = userEntry ? Math.max(1, cutoffDays - userEntry.presentDays + 1) : 0;
+
+  return (
+    <div className="space-y-4 w-full">
+      {/* 1. Gamified Top 3 Podium */}
+      {showPodium && (
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 items-end pt-3 pb-1">
+          {/* 2nd Place (Silver) */}
+          {(() => {
+            const entry = top3[1];
+            const isUser =
+              cleanActiveUser &&
+              String(entry.membershipNumber).trim().toLowerCase() === cleanActiveUser;
+
+            return (
+              <div
+                key={entry.clientId}
+                className={`relative flex flex-col items-center p-2.5 sm:p-3 rounded-2xl border transition-all text-center ${
+                  isUser
+                    ? 'bg-linear-to-b from-emerald-500/20 via-zinc-900/95 to-zinc-950 border-emerald-400/60 shadow-[0_0_20px_-5px_rgba(52,211,153,0.3)]'
+                    : 'bg-linear-to-b from-slate-400/10 via-zinc-900/90 to-zinc-950 border-slate-400/30 hover:border-slate-300/50 shadow-md'
+                }`}
+              >
+                <div className="relative mb-2">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-zinc-800/90 border border-slate-400/40 flex items-center justify-center text-base shadow-sm">
+                    🥈
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 bg-slate-200 text-zinc-950 text-[9px] font-black px-1.5 py-0.2 rounded-md uppercase tracking-wider">
+                    2nd
+                  </span>
+                </div>
+
+                <span className="text-[11px] sm:text-xs font-bold text-white truncate max-w-full px-1">
+                  {entry.name}
+                </span>
+                {entry.membershipNumber && (
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    #{entry.membershipNumber}
+                  </span>
+                )}
+                {isUser && (
+                  <span className="mt-1 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
+                    You
+                  </span>
+                )}
+
+                <div className="mt-2 inline-flex items-center gap-1 bg-zinc-800/80 px-2 py-0.5 rounded-full border border-zinc-700/60">
+                  <span className="text-xs font-black text-zinc-200">{entry.presentDays}</span>
+                  <span className="text-[9px] font-medium text-zinc-400">days</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 1st Place (Gold - Elevated Champion) */}
+          {(() => {
+            const entry = top3[0];
+            const isUser =
+              cleanActiveUser &&
+              String(entry.membershipNumber).trim().toLowerCase() === cleanActiveUser;
+
+            return (
+              <div
+                key={entry.clientId}
+                className={`relative flex flex-col items-center p-3 sm:p-3.5 -mt-3.5 rounded-2xl border transition-all text-center ${
+                  isUser
+                    ? 'bg-linear-to-b from-amber-500/25 via-emerald-950/30 to-zinc-950 border-amber-400 shadow-[0_0_30px_-5px_rgba(251,191,36,0.4)]'
+                    : 'bg-linear-to-b from-amber-500/20 via-zinc-900/95 to-zinc-950 border-amber-400/50 hover:border-amber-300 shadow-[0_0_25px_-5px_rgba(251,191,36,0.3)]'
+                }`}
+              >
+                {/* Floating Crown Badge */}
+                <div className="absolute -top-3.5 flex items-center justify-center">
+                  <div className="bg-linear-to-r from-amber-400 to-yellow-500 text-zinc-950 p-1 rounded-full shadow-lg">
+                    <Crown className="w-3.5 h-3.5 fill-current" />
+                  </div>
+                </div>
+
+                <div className="relative mb-2 mt-1">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/20 border-2 border-amber-400/60 flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
+                    🥇
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 bg-amber-400 text-zinc-950 text-[9px] font-black px-1.5 py-0.2 rounded-md uppercase tracking-wider shadow-sm">
+                    1st
+                  </span>
+                </div>
+
+                <span className="text-xs sm:text-sm font-black text-amber-100 truncate max-w-full px-1">
+                  {entry.name}
+                </span>
+                {entry.membershipNumber && (
+                  <span className="text-[10px] text-amber-400/80 font-mono">
+                    #{entry.membershipNumber}
+                  </span>
+                )}
+                {isUser && (
+                  <span className="mt-1 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
+                    You
+                  </span>
+                )}
+
+                <div className="mt-2.5 inline-flex items-center gap-1 bg-linear-to-r from-amber-400 to-yellow-500 text-zinc-950 px-2.5 py-0.5 rounded-full font-black text-xs shadow-sm">
+                  <span>{entry.presentDays}</span>
+                  <span className="text-[9px] uppercase font-bold tracking-wider">days</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 3rd Place (Bronze) */}
+          {(() => {
+            const entry = top3[2];
+            const isUser =
+              cleanActiveUser &&
+              String(entry.membershipNumber).trim().toLowerCase() === cleanActiveUser;
+
+            return (
+              <div
+                key={entry.clientId}
+                className={`relative flex flex-col items-center p-2.5 sm:p-3 rounded-2xl border transition-all text-center ${
+                  isUser
+                    ? 'bg-linear-to-b from-emerald-500/20 via-zinc-900/95 to-zinc-950 border-emerald-400/60 shadow-[0_0_20px_-5px_rgba(52,211,153,0.3)]'
+                    : 'bg-linear-to-b from-amber-900/20 via-zinc-900/90 to-zinc-950 border-amber-700/40 hover:border-amber-600/60 shadow-md'
+                }`}
+              >
+                <div className="relative mb-2">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-zinc-800/90 border border-amber-700/40 flex items-center justify-center text-base shadow-sm">
+                    🥉
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 bg-amber-700 text-white text-[9px] font-black px-1.5 py-0.2 rounded-md uppercase tracking-wider">
+                    3rd
+                  </span>
+                </div>
+
+                <span className="text-[11px] sm:text-xs font-bold text-white truncate max-w-full px-1">
+                  {entry.name}
+                </span>
+                {entry.membershipNumber && (
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    #{entry.membershipNumber}
+                  </span>
+                )}
+                {isUser && (
+                  <span className="mt-1 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
+                    You
+                  </span>
+                )}
+
+                <div className="mt-2 inline-flex items-center gap-1 bg-zinc-800/80 px-2 py-0.5 rounded-full border border-zinc-700/60">
+                  <span className="text-xs font-black text-amber-500">{entry.presentDays}</span>
+                  <span className="text-[9px] font-medium text-zinc-400">days</span>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* 2. Ranks 4 to 10 (or 1 to 10 if podium not shown) */}
+      {ranks4to10.length > 0 && (
+        <div className="bg-zinc-950/75 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-850 overflow-hidden shadow-inner backdrop-blur-sm">
+          {ranks4to10.map((entry) => {
+            const isUser =
+              cleanActiveUser &&
+              String(entry.membershipNumber).trim().toLowerCase() === cleanActiveUser;
+
+            const relativePct = Math.min(100, Math.max(12, Math.round((entry.presentDays / top1Days) * 100)));
+
+            return (
+              <div
+                key={entry.clientId}
+                className={`flex items-center justify-between px-3.5 py-2.5 sm:px-4 sm:py-3 transition-all text-xs group ${
+                  isUser
+                    ? 'bg-emerald-500/15 border-l-4 border-emerald-400 font-bold'
+                    : 'hover:bg-zinc-900/60'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* Rank Badge */}
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-black transition-transform group-hover:scale-105 ${
+                      entry.rank === 1
+                        ? 'bg-linear-to-br from-amber-400 to-yellow-500 text-zinc-950 shadow-xs'
+                        : entry.rank === 2
+                        ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                        : entry.rank === 3
+                        ? 'bg-amber-700 text-white shadow-xs'
+                        : 'bg-zinc-900 text-zinc-400 border border-zinc-750'
+                    }`}
+                  >
+                    {entry.rank <= 3
+                      ? entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'
+                      : `#${entry.rank}`}
+                  </span>
+
+                  <div className="truncate">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className={`truncate ${isUser ? 'text-emerald-300 font-black' : 'text-zinc-200 font-semibold group-hover:text-white'}`}>
+                        {entry.name}
+                      </span>
+                      {isUser && (
+                        <span className="text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md shrink-0">
+                          You
+                        </span>
+                      )}
+                    </div>
+                    {entry.membershipNumber && (
+                      <span className="text-[10px] text-zinc-500 font-mono">
+                        #{entry.membershipNumber}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right side: Attendance days count & relative bar */}
+                <div className="flex items-center gap-2.5 shrink-0 pl-2">
+                  <div className="hidden sm:flex flex-col items-end gap-0.5">
+                    <div className="w-12 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-linear-to-r from-emerald-500 to-teal-400 rounded-full transition-all"
+                        style={{ width: `${relativePct}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-1 text-right">
+                    <span className="font-black text-emerald-400 text-sm sm:text-base">
+                      {entry.presentDays}
+                    </span>
+                    <span className="text-[10px] font-semibold text-zinc-500">days</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 3. Standings card for user outside Top 10 */}
+      {userEntry && (
+        <div className="pt-2 animate-in fade-in slide-in-from-bottom-2">
+          <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Flame className="h-4 w-4 text-amber-500 animate-pulse" />
+              <span>Your Current Position</span>
+            </div>
+            {daysToTop10 > 0 && (
+              <span className="text-[10px] font-bold text-emerald-400/90 lowercase tracking-normal">
+                {daysToTop10} {daysToTop10 === 1 ? 'day' : 'days'} to enter Top 10
+              </span>
+            )}
+          </div>
+
+          <div className="relative overflow-hidden flex items-center justify-between p-3.5 rounded-2xl bg-linear-to-r from-emerald-950/50 via-zinc-900/90 to-emerald-950/50 border border-emerald-500/50 shadow-lg shadow-emerald-950/50">
+            <div className="absolute inset-0 bg-linear-to-r from-emerald-500/5 to-transparent pointer-events-none"></div>
+
+            <div className="relative flex items-center gap-3 min-w-0">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-emerald-400 to-emerald-600 text-zinc-950 font-black text-xs shadow-md">
+                #{userEntry.rank}
+              </span>
+              <div className="truncate">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-emerald-300 font-extrabold truncate">
+                    {userEntry.name}
+                  </span>
+                  <span className="text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
+                    You
+                  </span>
+                </div>
+                {userEntry.membershipNumber && (
+                  <span className="text-[10px] text-emerald-400/70 font-mono">
+                    #{userEntry.membershipNumber}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="relative flex items-baseline gap-1 shrink-0">
+              <span className="font-black text-emerald-400 text-base">
+                {userEntry.presentDays}
+              </span>
+              <span className="text-[10px] font-bold text-emerald-400/80">days</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const CheckInPage: React.FC = () => {
   const [step, setStep] = useState<'request_location' | 'verifying' | 'input' | 'success' | 'error'>('request_location');
@@ -320,159 +669,45 @@ export const CheckInPage: React.FC = () => {
       {/* 1. STANDALONE LEADERBOARD VIEW (Top 10 + Current User Position Fallback)    */}
       {/* ========================================================================= */}
       {showLeaderboardView ? (
-        <div className="relative bg-zinc-900/85 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.06)] w-full max-w-lg border border-zinc-800/80 transition-all space-y-5">
+        <div className="relative bg-zinc-900/85 backdrop-blur-2xl p-5 sm:p-7 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.06)] w-full max-w-lg border border-zinc-800/80 transition-all space-y-4">
           {/* Top subtle highlight */}
-          <div className="absolute inset-x-12 top-0 h-px bg-linear-to-r from-transparent via-amber-500/40 to-transparent"></div>
+          <div className="absolute inset-x-12 top-0 h-px bg-linear-to-r from-transparent via-amber-500/50 to-transparent"></div>
 
           {/* Header - Only one back button on top left */}
           <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
             <button
               onClick={() => setShowLeaderboardView(false)}
-              className="flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-800 px-3 py-1.5 rounded-xl border border-zinc-700/60 transition-colors cursor-pointer shadow-xs"
+              className="group flex items-center gap-1.5 text-xs font-bold text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-800 px-3.5 py-1.5 rounded-full border border-zinc-700/60 transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
+              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
               <span>Back to Check-In</span>
             </button>
 
-            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 px-2.5 py-1 rounded-lg border border-amber-500/30 shadow-xs">
-              {currentMonthName}
+            <span className="text-[10px] font-black uppercase tracking-wider bg-linear-to-r from-amber-500/20 to-amber-500/10 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30 shadow-xs flex items-center gap-1.5">
+              <Trophy className="w-3 h-3 text-amber-400" />
+              <span>{currentMonthName}</span>
             </span>
           </div>
 
           {/* Title Banner */}
-          <div className="text-center space-y-1.5">
-            <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-amber-400/15 text-amber-400 mb-1 border border-amber-400/30 shadow-lg shadow-amber-500/10">
+          <div className="text-center space-y-1">
+            <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-linear-to-br from-amber-400/20 to-amber-500/10 text-amber-400 mb-1 border border-amber-400/30 shadow-lg shadow-amber-500/10">
               <Trophy className="h-6 w-6 animate-pulse" />
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
               Monthly Leaderboard
             </h2>
             <p className="text-xs text-zinc-400">
-              Top 10 attendance turnout for {currentMonthName}. Resets on the 1st of every month.
+              Top attendance champions for {currentMonthName}. Resets on the 1st of every month.
             </p>
           </div>
 
-          {/* Top 10 Leaderboard List */}
-          {loadingLeaderboard ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-8 h-8 border-3 border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
-              <span className="text-xs text-zinc-400 font-semibold">Loading Leaderboard...</span>
-            </div>
-          ) : leaderboardData.top10.length > 0 ? (
-            <div className="space-y-3">
-              <div className="bg-zinc-950/80 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/60 overflow-hidden shadow-inner">
-                {leaderboardData.top10.map((entry) => {
-                  const isCurrentClient =
-                    activeUserMem &&
-                    entry.membershipNumber &&
-                    String(entry.membershipNumber).trim().toLowerCase() === activeUserMem;
-
-                  return (
-                    <div
-                      key={entry.clientId}
-                      className={`flex items-center justify-between px-4 py-3 transition-all text-xs ${isCurrentClient
-                        ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
-                        : 'hover:bg-zinc-900/60'
-                        }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Rank Badge */}
-                        <span
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${entry.rank === 1
-                            ? 'bg-amber-400 text-zinc-950 shadow-xs'
-                            : entry.rank === 2
-                              ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                              : entry.rank === 3
-                                ? 'bg-amber-700 text-white shadow-xs'
-                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                            }`}
-                        >
-                          {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
-                        </span>
-
-                        <div className="truncate">
-                          <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200 font-medium'}`}>
-                            {entry.name}
-                          </span>
-                          {entry.membershipNumber && (
-                            <span className="text-[10px] text-zinc-500 ml-1.5 font-mono">
-                              #{entry.membershipNumber}
-                            </span>
-                          )}
-                          {isCurrentClient && (
-                            <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
-                              You
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="font-extrabold text-emerald-400 text-sm">
-                          {entry.presentDays}
-                        </span>
-                        <span className="text-[10px] text-zinc-500">days</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* If user has an auto-filled membership number and is NOT in top 10, show their position at bottom */}
-              {(() => {
-                if (!activeUserMem) return null;
-                const isInTop10 = leaderboardData.top10.some(
-                  e => String(e.membershipNumber).trim().toLowerCase() === activeUserMem
-                );
-
-                if (isInTop10) return null;
-
-                const userEntry = leaderboardData.allRanked.find(
-                  e => String(e.membershipNumber).trim().toLowerCase() === activeUserMem
-                );
-
-                if (!userEntry) return null;
-
-                return (
-                  <div className="mt-3 pt-2">
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                      <Flame className="h-3.5 w-3.5 text-amber-500" />
-                      <span>Your Current Position</span>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/40 text-xs shadow-md">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-zinc-950 font-black text-xs">
-                          #{userEntry.rank}
-                        </span>
-                        <div className="truncate">
-                          <span className="text-emerald-300 font-bold truncate">
-                            {userEntry.name}
-                          </span>
-                          <span className="text-[10px] text-emerald-400/80 ml-1.5 font-mono">
-                            (#{userEntry.membershipNumber})
-                          </span>
-                          <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
-                            You
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-extrabold text-emerald-400 text-sm">
-                          {userEntry.presentDays}
-                        </span>
-                        <span className="text-[10px] text-emerald-400/80">days</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-zinc-500 text-center">
-              <span className="text-xs font-semibold">No attendance recorded for this month yet.</span>
-            </div>
-          )}
+          {/* Leaderboard Body */}
+          <LeaderboardContent
+            leaderboardData={leaderboardData}
+            loading={loadingLeaderboard}
+            activeUserMem={activeUserMem}
+          />
         </div>
       ) : (
         /* ========================================================================= */
@@ -648,137 +883,24 @@ export const CheckInPage: React.FC = () => {
               )}
 
               {/* Leaderboard Section */}
-              <div className="w-full space-y-3">
-                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+              <div className="w-full space-y-3 pt-2">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
                   <div className="flex items-center gap-2">
                     <Trophy className="h-4.5 w-4.5 text-amber-400 animate-bounce" />
                     <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
                       {new Date().toLocaleString('en-US', { month: 'long' })} Leaderboard
                     </h3>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/30">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-linear-to-r from-amber-500/20 to-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-500/30 shadow-xs">
                     Monthly Top 10
                   </span>
                 </div>
 
-                {loadingLeaderboard ? (
-                  <div className="flex flex-col items-center justify-center py-6">
-                    <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span className="text-xs text-zinc-400">Loading Leaderboard...</span>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {/* Top 10 List */}
-                    <div className="bg-zinc-950/80 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/60 overflow-hidden shadow-inner">
-                      {leaderboardData.top10.map((entry) => {
-                        const isCurrentClient =
-                          successDetails?.membership_number &&
-                          String(entry.membershipNumber).trim().toLowerCase() ===
-                          String(successDetails.membership_number).trim().toLowerCase();
-
-                        return (
-                          <div
-                            key={entry.clientId}
-                            className={`flex items-center justify-between px-4 py-3 transition-all text-xs ${isCurrentClient
-                              ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
-                              : 'hover:bg-zinc-900/60'
-                              }`}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              {/* Rank Badge */}
-                              <span
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${entry.rank === 1
-                                  ? 'bg-amber-400 text-zinc-950 shadow-xs'
-                                  : entry.rank === 2
-                                    ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                                    : entry.rank === 3
-                                      ? 'bg-amber-700 text-white shadow-xs'
-                                      : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                                  }`}
-                              >
-                                {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
-                              </span>
-
-                              <div className="truncate">
-                                <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200 font-medium'}`}>
-                                  {entry.name}
-                                </span>
-                                {entry.membershipNumber && (
-                                  <span className="text-[10px] text-zinc-500 ml-1.5 font-mono">
-                                    #{entry.membershipNumber}
-                                  </span>
-                                )}
-                                {isCurrentClient && (
-                                  <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
-                                    You
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="font-extrabold text-emerald-400 text-sm">
-                                {entry.presentDays}
-                              </span>
-                              <span className="text-[10px] text-zinc-500">days</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* If the checked-in user is NOT in the Top 10, show their position at the bottom */}
-                    {(() => {
-                      if (!successDetails?.membership_number) return null;
-                      const cleanUserMem = String(successDetails.membership_number).trim().toLowerCase();
-                      const isInTop10 = leaderboardData.top10.some(
-                        e => String(e.membershipNumber).trim().toLowerCase() === cleanUserMem
-                      );
-
-                      if (isInTop10) return null;
-
-                      const userEntry = leaderboardData.allRanked.find(
-                        e => String(e.membershipNumber).trim().toLowerCase() === cleanUserMem
-                      );
-
-                      if (!userEntry) return null;
-
-                      return (
-                        <div className="mt-3 pt-2">
-                          <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                            <Flame className="h-3.5 w-3.5 text-amber-500" />
-                            <span>Your Current Position</span>
-                          </div>
-                          <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/40 text-xs shadow-md">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-zinc-950 font-black text-xs">
-                                #{userEntry.rank}
-                              </span>
-                              <div className="truncate">
-                                <span className="text-emerald-300 font-bold truncate">
-                                  {userEntry.name}
-                                </span>
-                                <span className="text-[10px] text-emerald-400/80 ml-1.5 font-mono">
-                                  (#{userEntry.membershipNumber})
-                                </span>
-                                <span className="ml-2 text-[9px] font-black uppercase bg-emerald-500 text-zinc-950 px-1.5 py-0.2 rounded-md">
-                                  You
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="font-extrabold text-emerald-400 text-sm">
-                                {userEntry.presentDays}
-                              </span>
-                              <span className="text-[10px] text-emerald-400/80">days</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                <LeaderboardContent
+                  leaderboardData={leaderboardData}
+                  loading={loadingLeaderboard}
+                  activeUserMem={String(successDetails?.membership_number || activeUserMem)}
+                />
               </div>
 
               <p className="text-xs text-zinc-500 font-medium">Keep crushing your fitness goals!</p>

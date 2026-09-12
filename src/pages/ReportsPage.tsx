@@ -15,6 +15,7 @@ import {
   Trophy,
   X,
   Flame,
+  Crown,
 } from 'lucide-react';
 import { CustomDatePicker } from '../components/CustomDatePicker';
 import { generateAndDownloadAttendancePdf } from '../utils/generateAttendancePdf';
@@ -489,8 +490,10 @@ export const ReportsPage: React.FC = () => {
                     <span className="text-xs font-bold">Loading monthly leaderboard...</span>
                   </div>
                 ) : (() => {
+                  const top1Days = Math.max(1, leaderboardData.top10[0]?.presentDays || 1);
+                  const isSearching = !!leaderboardSearch.trim();
                   const filtered = leaderboardData.allRanked.filter((entry) => {
-                    if (!leaderboardSearch.trim()) return true;
+                    if (!isSearching) return true;
                     const q = leaderboardSearch.toLowerCase().trim();
                     return (
                       entry.name.toLowerCase().includes(q) ||
@@ -507,51 +510,155 @@ export const ReportsPage: React.FC = () => {
                     );
                   }
 
-                  return (
-                    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {filtered.map((entry) => (
-                        <div
-                          key={entry.clientId}
-                          className="flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-900/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-xs"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            {/* Rank Badge */}
-                            <span
-                              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
-                                entry.rank === 1
-                                  ? 'bg-amber-400 text-zinc-950 shadow-xs'
-                                  : entry.rank === 2
-                                  ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                                  : entry.rank === 3
-                                  ? 'bg-amber-700 text-white shadow-xs'
-                                  : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-                              }`}
-                            >
-                              {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
-                            </span>
+                  const showPodium = !isSearching && leaderboardData.top10.length >= 3;
+                  const top3 = leaderboardData.top10.slice(0, 3);
 
-                            <div className="truncate">
-                              <span className="font-bold text-zinc-800 dark:text-white">
-                                {entry.name}
+                  return (
+                    <div className="space-y-3">
+                      {/* Top 3 Podium for Overview */}
+                      {showPodium && (
+                        <div className="grid grid-cols-3 gap-2 sm:gap-3 items-end pt-2 pb-1">
+                          {/* 2nd Place */}
+                          <div className="flex flex-col items-center p-2.5 rounded-xl border border-slate-300/40 dark:border-slate-400/20 bg-linear-to-b from-slate-100/60 to-white dark:from-slate-400/10 dark:via-zinc-900/90 dark:to-zinc-950 text-center shadow-xs">
+                            <div className="relative mb-1.5">
+                              <div className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-slate-300 dark:border-slate-400/40 flex items-center justify-center text-sm shadow-xs">
+                                🥈
+                              </div>
+                              <span className="absolute -bottom-1 -right-1 bg-slate-300 dark:bg-slate-200 text-zinc-950 text-[8px] font-black px-1 rounded-sm uppercase">
+                                2nd
                               </span>
-                              {entry.membershipNumber && (
-                                <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-500 ml-2">
-                                  #{entry.membershipNumber}
-                                </span>
-                              )}
+                            </div>
+                            <span className="text-[11px] font-bold text-zinc-800 dark:text-white truncate max-w-full px-1">
+                              {top3[1].name}
+                            </span>
+                            {top3[1].membershipNumber && (
+                              <span className="text-[9px] text-zinc-400 font-mono">
+                                #{top3[1].membershipNumber}
+                              </span>
+                            )}
+                            <div className="mt-1.5 inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-full">
+                              <span className="text-xs font-black text-zinc-700 dark:text-zinc-200">{top3[1].presentDays}</span>
+                              <span className="text-[9px] text-zinc-400">days</span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0 pl-3">
-                            <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">
-                              {entry.presentDays}
+                          {/* 1st Place */}
+                          <div className="relative flex flex-col items-center p-3 -mt-2 rounded-xl border border-amber-300/60 dark:border-amber-400/50 bg-linear-to-b from-amber-50 to-white dark:from-amber-500/15 dark:via-zinc-900/90 dark:to-zinc-950 text-center shadow-xs">
+                            <div className="absolute -top-3 flex items-center justify-center">
+                              <div className="bg-linear-to-r from-amber-400 to-yellow-500 text-zinc-950 p-0.5 rounded-full shadow-xs">
+                                <Crown className="w-3 h-3 fill-current" />
+                              </div>
+                            </div>
+                            <div className="relative mb-1.5 mt-0.5">
+                              <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-400/60 flex items-center justify-center text-base shadow-xs">
+                                🥇
+                              </div>
+                              <span className="absolute -bottom-1 -right-1 bg-amber-400 text-zinc-950 text-[8px] font-black px-1 rounded-sm uppercase">
+                                1st
+                              </span>
+                            </div>
+                            <span className="text-xs font-black text-amber-900 dark:text-amber-200 truncate max-w-full px-1">
+                              {top3[0].name}
                             </span>
-                            <span className="text-[11px] font-semibold text-zinc-400">
-                              {entry.presentDays === 1 ? 'day' : 'days'}
+                            {top3[0].membershipNumber && (
+                              <span className="text-[9px] text-amber-600 dark:text-amber-400/80 font-mono">
+                                #{top3[0].membershipNumber}
+                              </span>
+                            )}
+                            <div className="mt-1.5 inline-flex items-center gap-1 bg-linear-to-r from-amber-400 to-yellow-500 text-zinc-950 px-2 py-0.5 rounded-full font-black text-xs shadow-2xs">
+                              <span>{top3[0].presentDays}</span>
+                              <span className="text-[9px] uppercase font-bold">days</span>
+                            </div>
+                          </div>
+
+                          {/* 3rd Place */}
+                          <div className="flex flex-col items-center p-2.5 rounded-xl border border-amber-800/20 dark:border-amber-700/30 bg-linear-to-b from-amber-100/40 to-white dark:from-amber-900/15 dark:via-zinc-900/90 dark:to-zinc-950 text-center shadow-xs">
+                            <div className="relative mb-1.5">
+                              <div className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-amber-700/40 flex items-center justify-center text-sm shadow-xs">
+                                🥉
+                              </div>
+                              <span className="absolute -bottom-1 -right-1 bg-amber-700 text-white text-[8px] font-black px-1 rounded-sm uppercase">
+                                3rd
+                              </span>
+                            </div>
+                            <span className="text-[11px] font-bold text-zinc-800 dark:text-white truncate max-w-full px-1">
+                              {top3[2].name}
                             </span>
+                            {top3[2].membershipNumber && (
+                              <span className="text-[9px] text-zinc-400 font-mono">
+                                #{top3[2].membershipNumber}
+                              </span>
+                            )}
+                            <div className="mt-1.5 inline-flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-full">
+                              <span className="text-xs font-black text-amber-600 dark:text-amber-500">{top3[2].presentDays}</span>
+                              <span className="text-[9px] text-zinc-400">days</span>
+                            </div>
                           </div>
                         </div>
-                      ))}
+                      )}
+
+                      {/* Full Ranked List */}
+                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+                        {filtered.map((entry) => {
+                          const relativePct = Math.min(100, Math.max(12, Math.round((entry.presentDays / top1Days) * 100)));
+
+                          return (
+                            <div
+                              key={entry.clientId}
+                              className="flex items-center justify-between px-3.5 py-2.5 bg-white dark:bg-zinc-900/60 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-xs group"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                {/* Rank Badge */}
+                                <span
+                                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-xs font-black transition-transform group-hover:scale-105 ${
+                                    entry.rank === 1
+                                      ? 'bg-linear-to-br from-amber-400 to-yellow-500 text-zinc-950 shadow-xs'
+                                      : entry.rank === 2
+                                      ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                                      : entry.rank === 3
+                                      ? 'bg-amber-700 text-white shadow-xs'
+                                      : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                                  }`}
+                                >
+                                  {entry.rank <= 3
+                                    ? entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'
+                                    : `#${entry.rank}`}
+                                </span>
+
+                                <div className="truncate">
+                                  <span className="font-bold text-zinc-800 dark:text-white">
+                                    {entry.name}
+                                  </span>
+                                  {entry.membershipNumber && (
+                                    <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 ml-2">
+                                      #{entry.membershipNumber}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0 pl-3">
+                                <div className="hidden sm:flex flex-col items-end gap-0.5">
+                                  <div className="w-12 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-linear-to-r from-emerald-500 to-teal-400 rounded-full"
+                                      style={{ width: `${relativePct}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div className="flex items-baseline gap-1 text-right">
+                                  <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">
+                                    {entry.presentDays}
+                                  </span>
+                                  <span className="text-[10px] font-semibold text-zinc-400">
+                                    {entry.presentDays === 1 ? 'day' : 'days'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })()}
