@@ -180,23 +180,15 @@ export const CheckInPage: React.FC = () => {
         {/* Background Ambient Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
-        {/* Centered Logo with Pulsing Glow */}
+        {/* Centered App Icon with Pulsing Glow */}
         <div className="relative mb-6 z-10">
           <div className="absolute -inset-3 bg-emerald-500/25 rounded-full blur-xl animate-pulse"></div>
-          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-900 border-2 border-emerald-500/40 p-3 shadow-2xl shadow-emerald-500/20 flex items-center justify-center overflow-hidden">
-            {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
-              <img
-                src={gymSettings.logoUrl}
-                alt="Gym Logo"
-                className="h-full w-full object-cover rounded-2xl"
-              />
-            ) : (
-              <img
-                src="/logo.png"
-                alt="Zen Attendance Logo"
-                className="h-full w-full object-contain p-1"
-              />
-            )}
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-900 border-2 border-emerald-500/40 p-2 shadow-2xl shadow-emerald-500/20 flex items-center justify-center overflow-hidden">
+            <img
+              src="/app-icon.png"
+              alt="Zen Attendance App Icon"
+              className="h-full w-full object-cover rounded-2xl"
+            />
           </div>
         </div>
 
