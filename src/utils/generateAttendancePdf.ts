@@ -26,6 +26,10 @@ interface PdfReportOptions {
 function escapePdfText(str: string): string {
   if (!str) return '';
   return String(str)
+    .replace(/[•·]/g, '-')
+    .replace(/[–—]/g, '-')
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
     .replace(/\\/g, '\\\\')
     .replace(/\(/g, '\\(')
     .replace(/\)/g, '\\)');
@@ -324,7 +328,8 @@ export function generateAndDownloadAttendancePdf(opts: PdfReportOptions): string
     // Table Column Headers
     let tableY = 750;
     doc.drawRect(leftX, tableY - 4, contentWidth, 20, 0.94, 0.95, 0.96);
-    doc.drawText('CLIENT NAME & MEMBERSHIP #', leftX + 8, tableY, 'F2', 9, 0.1, 0.15, 0.2);
+    doc.drawText('S.NO', leftX + 8, tableY, 'F2', 8.5, 0.1, 0.15, 0.2);
+    doc.drawText('CLIENT NAME & MEMBERSHIP #', leftX + 42, tableY, 'F2', 9, 0.1, 0.15, 0.2);
     doc.drawCenterText('PRESENT', leftX + 310, tableY, 'F2', 9, 0.09, 0.4, 0.2);
     doc.drawCenterText('ABSENT', leftX + 410, tableY, 'F2', 9, 0.6, 0.1, 0.1);
     doc.drawRightText('ATTENDANCE %', rightX - 8, tableY, 'F2', 9, 0.1, 0.15, 0.2);
@@ -342,18 +347,23 @@ export function generateAndDownloadAttendancePdf(opts: PdfReportOptions): string
         doc.drawRect(leftX, tableY - 4, contentWidth, 18, 0.98, 0.99, 0.99);
       }
 
-      // 1. Client Name & Number
+      const serialNum = startIdx + rowIdx + 1;
+
+      // 1. S.No
+      doc.drawText(String(serialNum), leftX + 8, tableY, 'F1', 8.5, 0.35, 0.4, 0.45);
+
+      // 2. Client Name & Number
       const memStr = stat.client.membership_number ? ` (#${stat.client.membership_number})` : '';
       const fullName = `${stat.client.name}${memStr}`;
-      doc.drawText(fullName, leftX + 8, tableY, 'F2', 9, 0.05, 0.09, 0.15);
+      doc.drawText(fullName, leftX + 42, tableY, 'F2', 9, 0.05, 0.09, 0.15);
 
-      // 2. Days Present
+      // 3. Days Present
       doc.drawCenterText(`${stat.present} d`, leftX + 310, tableY, 'F2', 9.5, 0.09, 0.4, 0.2);
 
-      // 3. Days Absent
+      // 4. Days Absent
       doc.drawCenterText(`${stat.absent} d`, leftX + 410, tableY, 'F2', 9.5, 0.6, 0.1, 0.1);
 
-      // 4. Rate %
+      // 5. Rate %
       const rateColor = stat.rate >= 50 ? { r: 0.09, g: 0.4, b: 0.2 } : { r: 0.6, g: 0.1, b: 0.1 };
       doc.drawRightText(`${stat.rate}%`, rightX - 8, tableY, 'F2', 9.5, rateColor.r, rateColor.g, rateColor.b);
 
@@ -364,7 +374,7 @@ export function generateAndDownloadAttendancePdf(opts: PdfReportOptions): string
     // Page Footer
     doc.drawLine(leftX, 55, rightX, 55, 1, 0.2, 0.2, 0.2);
     doc.drawText('Zen Attendance System', leftX, 42, 'F2', 9, 0.2, 0.2, 0.2);
-    const pageLabel = pageIdx === totalRosterPages - 1 ? `Page ${curPageNum} • End of Report` : `Page ${curPageNum}`;
+    const pageLabel = pageIdx === totalRosterPages - 1 ? `Page ${curPageNum} - End of Report` : `Page ${curPageNum}`;
     doc.drawRightText(pageLabel, rightX, 42, 'F2', 9, 0.2, 0.2, 0.2);
   }
 

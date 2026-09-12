@@ -1242,10 +1242,11 @@ export const ReportsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 4-Column Table: Zero Background Fills, Crisp Flat Lines, Rich Dark Text */}
+          {/* 5-Column Table: Zero Background Fills, Crisp Flat Lines, Rich Dark Text */}
           <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '11px' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #0f172a', color: '#000000', textTransform: 'uppercase', fontSize: '11px', fontWeight: 900, letterSpacing: '0.03em' }}>
+                <th style={{ padding: '8px 6px', width: '40px' }}>S.No</th>
                 <th style={{ padding: '8px 6px' }}>Client Name</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center' }}>Days Present</th>
                 <th style={{ padding: '8px 6px', textAlign: 'center' }}>Days Absent</th>
@@ -1253,11 +1254,15 @@ export const ReportsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredAndSortedStats.map((stat) => {
+              {filteredAndSortedStats.map((stat, idx) => {
                 const isHighOrMid = stat.rate >= 50;
 
                 return (
                   <tr key={stat.client.id} style={{ borderBottom: '1px solid #cbd5e1' }}>
+                    <td style={{ padding: '6px', fontWeight: 700, color: '#475569', width: '40px' }}>
+                      {idx + 1}
+                    </td>
+
                     {/* 1. Client Name (Dark Charcoal / Black) */}
                     <td style={{ padding: '6px', fontWeight: 800, color: '#0f172a' }}>
                       {stat.client.name}
@@ -1299,7 +1304,7 @@ export const ReportsPage: React.FC = () => {
           {/* Page 2 Footer */}
           <div style={{ marginTop: '24px', borderTop: '2px solid #0f172a', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>
             <span>Zen Attendance</span>
-            <span>Page 2+ • End of Report</span>
+            <span>Page 2+ - End of Report</span>
           </div>
         </div>
       </div>
