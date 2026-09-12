@@ -553,7 +553,7 @@ export const CheckInPage: React.FC = () => {
                 <div className="flex items-center gap-1.5 min-w-0">
                   <Sparkles className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                   <span className="text-[11px] text-zinc-400 truncate">
-                    Developed by <strong className="text-zinc-200 font-semibold">Ajay</strong> • Need website, app, or webservice?
+                    Need website, mobile apps or any webservices?
                   </span>
                 </div>
                 <button
@@ -773,8 +773,15 @@ export const CheckInPage: React.FC = () => {
         </div>
       )}
 
+      {/* Simple Text: Developed by Ajay */}
+      <div className={`mt-4 w-full text-center transition-all ${step === 'success' || showLeaderboardView ? 'max-w-lg' : 'max-w-md'}`}>
+        <span className="text-xs text-zinc-500 font-medium tracking-wide">
+          Developed by Ajay
+        </span>
+      </div>
+
       {/* Developer Contact Strip */}
-      <div className={`mt-4 w-full transition-all ${step === 'success' || showLeaderboardView ? 'max-w-lg' : 'max-w-md'}`}>
+      <div className={`mt-2 w-full transition-all ${step === 'success' || showLeaderboardView ? 'max-w-lg' : 'max-w-md'}`}>
         <div 
           onClick={() => setShowContactModal(true)}
           className="group cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-zinc-800/85 hover:bg-zinc-800 border border-emerald-500/25 hover:border-emerald-500/50 shadow-lg shadow-black/25 transition-all backdrop-blur-sm"
@@ -785,10 +792,10 @@ export const CheckInPage: React.FC = () => {
             </div>
             <div className="min-w-0 text-left">
               <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors block">
-                Developed by Ajay
+                Need website, mobile apps or any webservices?
               </span>
               <p className="text-[11px] text-zinc-400 truncate">
-                Need website, app, or any webservice? Contact developer
+                Contact developer
               </p>
             </div>
           </div>
@@ -818,18 +825,25 @@ export const CheckInPage: React.FC = () => {
               <X className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-3">
               <div className="h-10 w-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <Globe className="h-5 w-5" />
               </div>
               <div>
                 <h3 className="text-base font-black text-white">
-                  Developed by Ajay
+                  Developer Contact
                 </h3>
                 <p className="text-xs text-zinc-400">
                   Website, App & Web Service Development
                 </p>
               </div>
+            </div>
+
+            {/* Motivational Quote / Callout */}
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-center">
+              <p className="text-xs font-semibold text-emerald-300 leading-snug">
+                A webservice can make a huge difference in your life and business. Contact now!
+              </p>
             </div>
 
             <div className="space-y-2.5 mb-5 bg-zinc-800/60 p-3.5 rounded-xl border border-zinc-700/60">
@@ -847,27 +861,19 @@ export const CheckInPage: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
+            <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
               Need website, app, or any webservice? Contact developer directly:
             </p>
 
             <div className="space-y-2.5">
               <a
-                href="https://wa.me/919965735550?text=Hello%20Ajay!%20I%20saw%20Zen%20Attendance%20and%20I%20am%20interested%20in%20developing%20a%20website%2C%20app%2C%20or%20webservice."
+                href="https://wa.me/919965735550?text=Hello%20Ajay!%20I%20saw%20Zen%20Attendance%20and%20I%20would%20like%20to%20inquire%20about%20developing%20a%20website%2C%20app%2C%20or%20webservice."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-md cursor-pointer"
               >
                 <MessageSquare className="h-4 w-4" />
-                <span>Chat on WhatsApp (9965735550)</span>
-              </a>
-
-              <a
-                href="tel:9965735550"
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs border border-zinc-700 transition-colors cursor-pointer"
-              >
-                <Phone className="h-4 w-4 text-emerald-400" />
-                <span>Call: 9965735550</span>
+                <span>Click to Chat on WhatsApp</span>
               </a>
 
               <button
@@ -877,7 +883,7 @@ export const CheckInPage: React.FC = () => {
                   setContactCopied(true);
                   setTimeout(() => setContactCopied(false), 2500);
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-semibold border border-zinc-800 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold border border-zinc-700 transition-colors cursor-pointer"
               >
                 {contactCopied ? (
                   <>
@@ -894,12 +900,6 @@ export const CheckInPage: React.FC = () => {
 
             <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500">
               <span>Developer: Ajay • 9965735550</span>
-              <button
-                onClick={() => setShowContactModal(false)}
-                className="font-bold text-zinc-400 hover:text-white cursor-pointer"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>
