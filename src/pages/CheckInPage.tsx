@@ -733,18 +733,20 @@ export const CheckInPage: React.FC = () => {
               {gymSettings.gymName || 'Zen Attendance'}
             </h1>
 
-            {/* View Leaderboard Button directly above Self Check-In text */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowLeaderboardView(true);
-                fetchLeaderboard();
-              }}
-              className="group inline-flex items-center gap-2 bg-linear-to-r from-amber-500/10 via-amber-500/15 to-amber-500/10 hover:from-amber-500/20 hover:to-amber-500/20 active:scale-95 text-amber-300 px-4 py-1.5 rounded-full text-xs font-bold border border-amber-500/30 hover:border-amber-400/60 transition-all shadow-sm cursor-pointer mb-3"
-            >
-              <Trophy className="h-3.5 w-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-              <span>View Leaderboard</span>
-            </button>
+            {/* View Leaderboard Button directly above Self Check-In text (hidden on recorded attendance page) */}
+            {step !== 'success' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLeaderboardView(true);
+                  fetchLeaderboard();
+                }}
+                className="group inline-flex items-center gap-2 bg-linear-to-r from-amber-500/10 via-amber-500/15 to-amber-500/10 hover:from-amber-500/20 hover:to-amber-500/20 active:scale-95 text-amber-300 px-4 py-1.5 rounded-full text-xs font-bold border border-amber-500/30 hover:border-amber-400/60 transition-all shadow-sm cursor-pointer mb-3"
+              >
+                <Trophy className="h-3.5 w-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span>View Leaderboard</span>
+              </button>
+            )}
 
             <h2 className="text-lg sm:text-xl font-black text-center text-emerald-400 mb-1">Self Check-In</h2>
             <p className="text-zinc-400 text-xs font-medium flex items-center gap-1.5">
@@ -884,14 +886,14 @@ export const CheckInPage: React.FC = () => {
 
               {/* Leaderboard Section */}
               <div className="w-full space-y-3 pt-2">
-                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="h-4.5 w-4.5 text-amber-400 animate-bounce" />
-                    <h3 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
+                <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5 gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                    <Trophy className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-amber-400 animate-bounce shrink-0" />
+                    <h3 className="text-xs sm:text-base font-black uppercase tracking-wider text-white truncate">
                       {new Date().toLocaleString('en-US', { month: 'long' })} Leaderboard
                     </h3>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-linear-to-r from-amber-500/20 to-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-500/30 shadow-xs">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-linear-to-r from-amber-500/20 to-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-500/30 shadow-xs whitespace-nowrap shrink-0">
                     Monthly Top 10
                   </span>
                 </div>
