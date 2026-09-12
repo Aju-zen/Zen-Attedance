@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db, defaultSettings } from '../services/db';
 import { GymSettings, LeaderboardEntry } from '../types';
-import { Trophy, Medal, Award, Flame, UserCheck, ArrowLeft, Search, X, Sparkles, Globe, Smartphone, ArrowRight, Mail, Check, MessageSquare } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, UserCheck, ArrowLeft, Search, X, Sparkles, Globe, Smartphone, ArrowRight, Mail, Phone, Check, MessageSquare } from 'lucide-react';
 
 export const CheckInPage: React.FC = () => {
   const [step, setStep] = useState<'request_location' | 'verifying' | 'input' | 'success' | 'error'>('request_location');
@@ -548,12 +548,12 @@ export const CheckInPage: React.FC = () => {
                 {submitting ? 'Processing...' : 'Check In'}
               </button>
 
-              {/* Compact ad note inside check-in form */}
+              {/* Developer contact note inside check-in form */}
               <div className="pt-2 border-t border-zinc-700/60 flex items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <Sparkles className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                   <span className="text-[11px] text-zinc-400 truncate">
-                    Need a custom <strong className="text-zinc-200 font-semibold">Website</strong> or <strong className="text-zinc-200 font-semibold">App</strong>?
+                    Developed by <strong className="text-zinc-200 font-semibold">Ajay</strong> • Need website, app, or webservice?
                   </span>
                 </div>
                 <button
@@ -561,7 +561,7 @@ export const CheckInPage: React.FC = () => {
                   onClick={() => setShowContactModal(true)}
                   className="shrink-0 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition cursor-pointer"
                 >
-                  Contact →
+                  Contact developer →
                 </button>
               </div>
             </form>
@@ -773,27 +773,22 @@ export const CheckInPage: React.FC = () => {
         </div>
       )}
 
-      {/* Promotional Ad Strip (Sleek, eye-catching, not a huge banner, visible to everyone) */}
+      {/* Developer Contact Strip */}
       <div className={`mt-4 w-full transition-all ${step === 'success' || showLeaderboardView ? 'max-w-lg' : 'max-w-md'}`}>
         <div 
           onClick={() => setShowContactModal(true)}
           className="group cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-zinc-800/85 hover:bg-zinc-800 border border-emerald-500/25 hover:border-emerald-500/50 shadow-lg shadow-black/25 transition-all backdrop-blur-sm"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-8.5 w-8.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400 group-hover:scale-105 group-hover:bg-emerald-500/20 transition-all">
-              <Globe className="h-4 w-4 text-emerald-400" />
+            <div className="h-9 w-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400 group-hover:scale-105 group-hover:bg-emerald-500/20 transition-all">
+              <Globe className="h-4.5 w-4.5 text-emerald-400" />
             </div>
             <div className="min-w-0 text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">
-                  Need a Website or Mobile App?
-                </span>
-                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/30">
-                  Ad
-                </span>
-              </div>
+              <span className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors block">
+                Developed by Ajay
+              </span>
               <p className="text-[11px] text-zinc-400 truncate">
-                Contact for custom websites, apps & software development
+                Need website, app, or any webservice? Contact developer
               </p>
             </div>
           </div>
@@ -829,10 +824,10 @@ export const CheckInPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-black text-white">
-                  Custom Website & App Development
+                  Developed by Ajay
                 </h3>
                 <p className="text-xs text-zinc-400">
-                  Professional software, web & mobile solutions
+                  Website, App & Web Service Development
                 </p>
               </div>
             </div>
@@ -848,37 +843,37 @@ export const CheckInPage: React.FC = () => {
               </div>
               <div className="flex items-start gap-2 text-xs text-zinc-300">
                 <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong className="text-white">Custom Portals:</strong> Attendance trackers, client management & booking systems.</span>
+                <span><strong className="text-white">Custom Applications:</strong> Application to manage your business.</span>
               </div>
             </div>
 
             <p className="text-xs text-zinc-400 mb-5 leading-relaxed">
-              Want a high-quality website, mobile app, or management system tailored to your needs? Reach out directly to discuss your project:
+              Need website, app, or any webservice? Contact developer directly:
             </p>
 
             <div className="space-y-2.5">
               <a
-                href="https://wa.me/?text=Hello!%20I%20saw%20your%20ad%20on%20Zen%20Attendance%20and%20I%20am%20interested%20in%20developing%20a%20website%20or%20mobile%20app."
+                href="https://wa.me/919965735550?text=Hello%20Ajay!%20I%20saw%20Zen%20Attendance%20and%20I%20am%20interested%20in%20developing%20a%20website%2C%20app%2C%20or%20webservice."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-md cursor-pointer"
               >
                 <MessageSquare className="h-4 w-4" />
-                <span>Chat on WhatsApp</span>
+                <span>Chat on WhatsApp (9965735550)</span>
               </a>
 
               <a
-                href="mailto:contact@zenattendance.com?subject=Website%20or%20Mobile%20App%20Development%20Inquiry&body=Hi%2C%20I%20would%20like%20to%20inquire%20about%20custom%20website%20or%20mobile%20app%20development."
+                href="tel:9965735550"
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs border border-zinc-700 transition-colors cursor-pointer"
               >
-                <Mail className="h-4 w-4 text-emerald-400" />
-                <span>Send Email Inquiry</span>
+                <Phone className="h-4 w-4 text-emerald-400" />
+                <span>Call: 9965735550</span>
               </a>
 
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText('contact@zenattendance.com');
+                  navigator.clipboard.writeText('9965735550');
                   setContactCopied(true);
                   setTimeout(() => setContactCopied(false), 2500);
                 }}
@@ -887,18 +882,18 @@ export const CheckInPage: React.FC = () => {
                 {contactCopied ? (
                   <>
                     <Check className="h-3.5 w-3.5 text-emerald-400" />
-                    <span className="text-emerald-400">Email Copied to Clipboard!</span>
+                    <span className="text-emerald-400">Mobile Number Copied!</span>
                   </>
                 ) : (
                   <>
-                    <span>Copy Email (contact@zenattendance.com)</span>
+                    <span>Copy Mobile Number (9965735550)</span>
                   </>
                 )}
               </button>
             </div>
 
             <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500">
-              <span>Direct Developer Contact</span>
+              <span>Developer: Ajay • 9965735550</span>
               <button
                 onClick={() => setShowContactModal(false)}
                 className="font-bold text-zinc-400 hover:text-white cursor-pointer"
