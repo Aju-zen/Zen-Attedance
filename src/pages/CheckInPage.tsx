@@ -1003,7 +1003,7 @@ export const CheckInPage: React.FC = () => {
 
             <div className="space-y-2.5">
               <a
-                href="https://wa.me/919965735550?text=Hello%20Ajay!%20I%20saw%20Zen%20Attendance%20and%20I%20would%20like%20to%20inquire%20about%20developing%20a%20website%2C%20app%2C%20or%20webservice."
+                href="https://wa.me/919965735550?text=Hello%20Ajay!%20I%20saw%20your%20Zen%20Attendance%20Application%20and%20I%20would%20like%20to%20inquire%20about%20a%20webservice."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-md cursor-pointer"
