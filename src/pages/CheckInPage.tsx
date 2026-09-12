@@ -6,12 +6,12 @@ import { Trophy, Medal, Award, Flame, UserCheck, ArrowLeft, Search, X, Sparkles,
 export const CheckInPage: React.FC = () => {
   const [step, setStep] = useState<'request_location' | 'verifying' | 'input' | 'success' | 'error'>('request_location');
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Auto-load remembered membership number from this device's localStorage
   const [membershipNumber, setMembershipNumber] = useState(() => {
     return localStorage.getItem('client_saved_membership') || '';
   });
-  
+
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [successDetails, setSuccessDetails] = useState<any>(null);
@@ -67,21 +67,21 @@ export const CheckInPage: React.FC = () => {
   // Distance calculation function (Haversine)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371e3; // metres
-    const p1 = lat1 * Math.PI/180;
-    const p2 = lat2 * Math.PI/180;
-    const dp = (lat2-lat1) * Math.PI/180;
-    const dl = (lon2-lon1) * Math.PI/180;
+    const p1 = lat1 * Math.PI / 180;
+    const p2 = lat2 * Math.PI / 180;
+    const dp = (lat2 - lat1) * Math.PI / 180;
+    const dl = (lon2 - lon1) * Math.PI / 180;
 
-    const a = Math.sin(dp/2) * Math.sin(dp/2) +
-              Math.cos(p1) * Math.cos(p2) *
-              Math.sin(dl/2) * Math.sin(dl/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a = Math.sin(dp / 2) * Math.sin(dp / 2) +
+      Math.cos(p1) * Math.cos(p2) *
+      Math.sin(dl / 2) * Math.sin(dl / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   const [gymSettings, setGymSettings] = useState<GymSettings>(defaultSettings);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  
+
   useEffect(() => {
     db.getGlobalSettings().then(settings => {
       if (settings) {
@@ -114,7 +114,7 @@ export const CheckInPage: React.FC = () => {
       },
       (error) => {
         console.error('Geolocation error:', error);
-        
+
         let msg = 'An unknown error occurred while verifying location.';
         if (error.code === 1) {
           msg = 'Location permission is required to mark attendance. Please allow it and refresh the page.';
@@ -153,13 +153,13 @@ export const CheckInPage: React.FC = () => {
     if (location && !isLoadingSettings && step === 'verifying') {
       if (gymSettings.gymLocationLat && gymSettings.gymLocationLng) {
         const dist = calculateDistance(
-          location.lat, 
-          location.lng, 
-          gymSettings.gymLocationLat, 
+          location.lat,
+          location.lng,
+          gymSettings.gymLocationLat,
           gymSettings.gymLocationLng
         );
         const radius = gymSettings.gymLocationRadius || 50;
-        
+
         if (dist > radius) {
           setErrorMessage('You are not inside the gym.');
           setStep('error');
@@ -173,9 +173,8 @@ export const CheckInPage: React.FC = () => {
   if (showSplash || isLoadingSettings) {
     return (
       <div
-        className={`min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6 text-white transition-opacity duration-400 select-none relative overflow-hidden ${
-          splashFading ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
+        className={`min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6 text-white transition-opacity duration-400 select-none relative overflow-hidden ${splashFading ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
       >
         {/* Background Ambient Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
@@ -249,11 +248,11 @@ export const CheckInPage: React.FC = () => {
     }
 
     setSubmitting(true);
-    
+
     try {
       const fp = getDeviceFingerprint();
       const userAgent = navigator.userAgent;
-      
+
       const res = await db.processSelfCheckIn({
         membershipNumber: cleanNum,
         deviceFingerprint: fp,
@@ -299,11 +298,11 @@ export const CheckInPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-zinc-100 relative">
-      
+
       {/* Top Action Bar */}
       {gymSettings.enableTestMode && (
         <div className="absolute top-4 right-4 flex items-center gap-2">
-          <button 
+          <button
             onClick={handleClearTestData}
             className="bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-mono transition-colors"
             title="Clear device history for testing"
@@ -364,28 +363,26 @@ export const CheckInPage: React.FC = () => {
                   return (
                     <div
                       key={entry.clientId}
-                      className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${
-                        isCurrentClient
+                      className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${isCurrentClient
                           ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
                           : 'hover:bg-zinc-800/50'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         {/* Rank Badge */}
                         <span
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
-                            entry.rank === 1
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${entry.rank === 1
                               ? 'bg-amber-400 text-zinc-950 shadow-xs'
                               : entry.rank === 2
-                              ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                              : entry.rank === 3
-                              ? 'bg-amber-700 text-white shadow-xs'
-                              : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                          }`}
+                                ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                                : entry.rank === 3
+                                  ? 'bg-amber-700 text-white shadow-xs'
+                                  : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                            }`}
                         >
                           {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
                         </span>
-                        
+
                         <div className="truncate">
                           <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200'}`}>
                             {entry.name}
@@ -474,9 +471,8 @@ export const CheckInPage: React.FC = () => {
         /* ========================================================================= */
         /* 2. REGULAR CHECK-IN FLOW                                                  */
         /* ========================================================================= */
-        <div className={`bg-zinc-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full border border-zinc-700 transition-all ${
-          step === 'success' ? 'max-w-lg' : 'max-w-md'
-        }`}>
+        <div className={`bg-zinc-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full border border-zinc-700 transition-all ${step === 'success' ? 'max-w-lg' : 'max-w-md'
+          }`}>
           <div className="flex flex-col items-center mb-6 sm:mb-8">
             <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/30 overflow-hidden shrink-0">
               {gymSettings.logoUrl && gymSettings.logoUrl !== 'Dumbbell' ? (
@@ -524,7 +520,7 @@ export const CheckInPage: React.FC = () => {
                 </svg>
                 <span className="text-sm font-medium">You are in the gym</span>
               </div>
-              
+
               <div>
                 <label htmlFor="membership" className="block text-sm font-medium text-zinc-300 mb-2">
                   Membership Number
@@ -547,23 +543,6 @@ export const CheckInPage: React.FC = () => {
               >
                 {submitting ? 'Processing...' : 'Check In'}
               </button>
-
-              {/* Developer contact note inside check-in form */}
-              <div className="pt-2 border-t border-zinc-700/60 flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Sparkles className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-                  <span className="text-[11px] text-zinc-400 truncate">
-                    Need website, mobile apps or any webservices?
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowContactModal(true)}
-                  className="shrink-0 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 transition cursor-pointer"
-                >
-                  Contact developer →
-                </button>
-              </div>
             </form>
           )}
 
@@ -575,9 +554,9 @@ export const CheckInPage: React.FC = () => {
                 </svg>
               </div>
               <p className="text-red-400 text-center font-medium mb-6 text-lg">{errorMessage}</p>
-              
+
               <div className="flex items-center justify-center">
-                <button 
+                <button
                   onClick={() => {
                     if (errorMessage.includes('Location') || errorMessage.includes('not inside the gym')) {
                       requestLocation(true);
@@ -603,7 +582,7 @@ export const CheckInPage: React.FC = () => {
                 </div>
                 <h2 className="text-2xl font-black text-emerald-400">Attendance Recorded</h2>
               </div>
-              
+
               {/* Top Details Card */}
               {successDetails && (
                 <div className="bg-zinc-900 w-full rounded-xl p-4 border border-zinc-700 space-y-2.5 shadow-inner">
@@ -620,11 +599,10 @@ export const CheckInPage: React.FC = () => {
                     <span className="font-bold text-white">{successDetails.time}</span>
                   </div>
                   {successDetails.subscription_alert && (
-                    <div className={`mt-3 pt-3 border-t border-zinc-800 text-center font-bold text-xs px-3 py-2 rounded-lg ${
-                      successDetails.is_expired
+                    <div className={`mt-3 pt-3 border-t border-zinc-800 text-center font-bold text-xs px-3 py-2 rounded-lg ${successDetails.is_expired
                         ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
                         : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                    }`}>
+                      }`}>
                       {successDetails.subscription_alert}
                     </div>
                   )}
@@ -658,33 +636,31 @@ export const CheckInPage: React.FC = () => {
                         const isCurrentClient =
                           successDetails?.membership_number &&
                           String(entry.membershipNumber).trim().toLowerCase() ===
-                            String(successDetails.membership_number).trim().toLowerCase();
+                          String(successDetails.membership_number).trim().toLowerCase();
 
                         return (
                           <div
                             key={entry.clientId}
-                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${
-                              isCurrentClient
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs ${isCurrentClient
                                 ? 'bg-emerald-500/20 border-l-4 border-emerald-500 font-bold'
                                 : 'hover:bg-zinc-800/50'
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               {/* Rank Badge */}
                               <span
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
-                                  entry.rank === 1
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${entry.rank === 1
                                     ? 'bg-amber-400 text-zinc-950 shadow-xs'
                                     : entry.rank === 2
-                                    ? 'bg-zinc-300 text-zinc-950 shadow-xs'
-                                    : entry.rank === 3
-                                    ? 'bg-amber-700 text-white shadow-xs'
-                                    : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                                }`}
+                                      ? 'bg-zinc-300 text-zinc-950 shadow-xs'
+                                      : entry.rank === 3
+                                        ? 'bg-amber-700 text-white shadow-xs'
+                                        : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                  }`}
                               >
                                 {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
                               </span>
-                              
+
                               <div className="truncate">
                                 <span className={`truncate ${isCurrentClient ? 'text-emerald-300 font-black' : 'text-zinc-200'}`}>
                                   {entry.name}
@@ -766,7 +742,7 @@ export const CheckInPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <p className="text-xs text-zinc-500 font-medium">Keep crushing your fitness goals!</p>
             </div>
           )}
@@ -782,7 +758,7 @@ export const CheckInPage: React.FC = () => {
 
       {/* Developer Contact Strip */}
       <div className={`mt-2 w-full transition-all ${step === 'success' || showLeaderboardView ? 'max-w-lg' : 'max-w-md'}`}>
-        <div 
+        <div
           onClick={() => setShowContactModal(true)}
           className="group cursor-pointer flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-zinc-800/85 hover:bg-zinc-800 border border-emerald-500/25 hover:border-emerald-500/50 shadow-lg shadow-black/25 transition-all backdrop-blur-sm"
         >
@@ -799,7 +775,7 @@ export const CheckInPage: React.FC = () => {
               </p>
             </div>
           </div>
-          
+
           <button
             type="button"
             onClick={(e) => {
@@ -831,7 +807,7 @@ export const CheckInPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-black text-white">
-                  Developer Contact
+                  Ajay R- Full Stack Developer
                 </h3>
                 <p className="text-xs text-zinc-400">
                   Website, App & Web Service Development
@@ -861,8 +837,8 @@ export const CheckInPage: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
-              Need website, app, or any webservice? Contact developer directly:
+            <p className="text-xs text-white font-medium mb-4 leading-relaxed">
+              Contact developer directly:
             </p>
 
             <div className="space-y-2.5">
@@ -899,7 +875,7 @@ export const CheckInPage: React.FC = () => {
             </div>
 
             <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500">
-              <span>Developer: Ajay • 9965735550</span>
+              <span>Ajay R • 9965735550</span>
             </div>
           </div>
         </div>
