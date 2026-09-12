@@ -898,14 +898,14 @@ export const ReportsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 4-Column Table */}
+              {/* 4-Column Table with Sticky First Column for Mobile */}
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm border-collapse">
+                <table className="w-full text-left text-sm border-separate border-spacing-0">
                   <thead>
-                    <tr className="border-b border-zinc-100 bg-zinc-50/70 text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-400">
-                      {/* Column 1: Client Name */}
+                    <tr className="bg-zinc-50/70 text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
+                      {/* Column 1: Client Name (Pinned Sticky Left) */}
                       <th
-                        className="py-3 px-4 md:px-6 cursor-pointer hover:text-emerald-500 transition-colors"
+                        className="sticky left-0 z-20 py-3 px-4 md:px-6 cursor-pointer hover:text-emerald-500 transition-colors bg-zinc-50 dark:bg-zinc-800 border-b border-r border-zinc-200/80 dark:border-zinc-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.4)] min-w-[150px] sm:min-w-[200px]"
                         onClick={() => handleSort('name')}
                       >
                         <div className="flex items-center gap-1.5">
@@ -916,7 +916,7 @@ export const ReportsPage: React.FC = () => {
 
                       {/* Column 2: Days Present */}
                       <th
-                        className="py-3 px-4 text-center cursor-pointer hover:text-emerald-500 transition-colors"
+                        className="py-3 px-4 text-center cursor-pointer hover:text-emerald-500 transition-colors border-b border-zinc-100 dark:border-zinc-800 min-w-[110px] whitespace-nowrap"
                         onClick={() => handleSort('present')}
                       >
                         <div className="flex items-center justify-center gap-1.5">
@@ -927,7 +927,7 @@ export const ReportsPage: React.FC = () => {
 
                       {/* Column 3: Days Absent */}
                       <th
-                        className="py-3 px-4 text-center cursor-pointer hover:text-emerald-500 transition-colors"
+                        className="py-3 px-4 text-center cursor-pointer hover:text-emerald-500 transition-colors border-b border-zinc-100 dark:border-zinc-800 min-w-[110px] whitespace-nowrap"
                         onClick={() => handleSort('absent')}
                       >
                         <div className="flex items-center justify-center gap-1.5">
@@ -938,7 +938,7 @@ export const ReportsPage: React.FC = () => {
 
                       {/* Column 4: Attendance Percentage */}
                       <th
-                        className="py-3 px-4 md:px-6 text-right cursor-pointer hover:text-emerald-500 transition-colors"
+                        className="py-3 px-4 md:px-6 text-right cursor-pointer hover:text-emerald-500 transition-colors border-b border-zinc-100 dark:border-zinc-800 min-w-[140px] whitespace-nowrap"
                         onClick={() => handleSort('rate')}
                       >
                         <div className="flex items-center justify-end gap-1.5">
@@ -948,7 +948,7 @@ export const ReportsPage: React.FC = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+                  <tbody>
                     {filteredAndSortedStats.length > 0 ? (
                       filteredAndSortedStats.map((stat) => {
                         const isHigh = stat.rate >= 75;
@@ -957,16 +957,16 @@ export const ReportsPage: React.FC = () => {
                         return (
                           <tr
                             key={stat.client.id}
-                            className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors"
+                            className="group hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors"
                           >
-                            {/* 1. Client Name */}
-                            <td className="py-3.5 px-4 md:px-6">
+                            {/* 1. Client Name (Pinned Sticky Left) */}
+                            <td className="sticky left-0 z-10 py-3.5 px-4 md:px-6 bg-white dark:bg-zinc-900 group-hover:bg-zinc-50 dark:group-hover:bg-zinc-800 transition-colors border-b border-r border-zinc-100 dark:border-zinc-800/60 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_5px_-2px_rgba(0,0,0,0.4)] min-w-[150px] sm:min-w-[200px]">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                                <span className="font-bold text-zinc-800 dark:text-zinc-200 truncate">
                                   {stat.client.name}
                                 </span>
                                 {stat.client.membership_number && (
-                                  <span className="text-3xs font-extrabold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                                  <span className="text-3xs font-extrabold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 shrink-0">
                                     #{stat.client.membership_number}
                                   </span>
                                 )}
@@ -974,21 +974,21 @@ export const ReportsPage: React.FC = () => {
                             </td>
 
                             {/* 2. Days Present */}
-                            <td className="py-3.5 px-4 text-center">
+                            <td className="py-3.5 px-4 text-center border-b border-zinc-100 dark:border-zinc-800/60 whitespace-nowrap">
                               <span className="inline-flex items-center justify-center min-w-[3rem] px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
                                 {stat.present} d
                               </span>
                             </td>
 
                             {/* 3. Days Absent */}
-                            <td className="py-3.5 px-4 text-center">
+                            <td className="py-3.5 px-4 text-center border-b border-zinc-100 dark:border-zinc-800/60 whitespace-nowrap">
                               <span className="inline-flex items-center justify-center min-w-[3rem] px-2.5 py-1 rounded-lg text-xs font-black bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
                                 {stat.absent} d
                               </span>
                             </td>
 
                             {/* 4. Attendance Percentage */}
-                            <td className="py-3.5 px-4 md:px-6 text-right">
+                            <td className="py-3.5 px-4 md:px-6 text-right border-b border-zinc-100 dark:border-zinc-800/60 whitespace-nowrap">
                               <div className="inline-flex items-center justify-end gap-2.5">
                                 <div className="hidden sm:block w-20 bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
                                   <div
@@ -1022,7 +1022,7 @@ export const ReportsPage: React.FC = () => {
                       <tr>
                         <td
                           colSpan={4}
-                          className="py-8 text-center text-sm font-semibold text-zinc-400 dark:text-zinc-500"
+                          className="py-8 text-center text-sm font-semibold text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-800/60"
                         >
                           No clients found matching your search.
                         </td>
