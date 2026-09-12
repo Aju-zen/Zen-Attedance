@@ -20,6 +20,7 @@ interface PdfReportOptions {
   highestWeekday: { name: string; avg: number };
   lowestWeekday: { name: string; avg: number };
   gymDays: number;
+  category?: 'all' | 'active';
 }
 
 function escapePdfText(str: string): string {
@@ -238,13 +239,14 @@ export function generateAndDownloadAttendancePdf(opts: PdfReportOptions): string
   doc.drawText(`${opts.avgDailyPresence} /day`, col2X + 12, metricY + 22, 'F2', 22, 0.09, 0.4, 0.2);
   doc.drawText(`Across ${opts.gymDays} active logged days`, col2X + 12, metricY + 8, 'F1', 8, 0.3, 0.4, 0.3);
 
-  // Col 3: Total Active Members
+  // Col 3: Total Members / Active Clients in Report
   const col3X = col2X + colWidth + 12;
   doc.drawRect(col3X, metricY, colWidth, 65, 0.97, 0.98, 0.99);
   doc.drawLine(col3X, metricY, col3X, metricY + 65, 3.5, 0.05, 0.09, 0.16);
-  doc.drawText('TOTAL ACTIVE MEMBERS', col3X + 12, metricY + 48, 'F2', 9, 0.25, 0.3, 0.35);
+  const card3Label = opts.category === 'active' ? 'ACTIVE CLIENTS IN REPORT' : 'TOTAL MEMBERS IN REPORT';
+  doc.drawText(card3Label, col3X + 12, metricY + 48, 'F2', 8.5, 0.25, 0.3, 0.35);
   doc.drawText(String(opts.clientStats.length), col3X + 12, metricY + 22, 'F2', 22, 0, 0, 0);
-  doc.drawText('Registered gym clients', col3X + 12, metricY + 8, 'F1', 8, 0.4, 0.45, 0.5);
+  doc.drawText(opts.category === 'active' ? 'Attended at least 1 day' : 'Registered gym clients', col3X + 12, metricY + 8, 'F1', 8, 0.4, 0.45, 0.5);
 
   // Section 2: Two Columns (Most Regular Members & Weekday Trends)
   const sec2Y = 620;
@@ -313,7 +315,8 @@ export function generateAndDownloadAttendancePdf(opts: PdfReportOptions): string
     const curPageNum = pageIdx + 2;
 
     // Header on Page 2+
-    doc.drawText(`${gymUpper} - MEMBER ATTENDANCE REPORT`, leftX, 795, 'F2', 14, 0, 0, 0);
+    const catHeader = opts.category === 'active' ? ' (ACTIVE CLIENTS ONLY)' : '';
+    doc.drawText(`${gymUpper} - MEMBER ATTENDANCE REPORT${catHeader}`, leftX, 795, 'F2', 13, 0, 0, 0);
     const subheader = `Period: ${formatDMY(opts.startDate)} to ${formatDMY(opts.endDate)}  |  Total Operating Days: ${opts.durationDays}`;
     doc.drawText(subheader, leftX, 780, 'F1', 9.5, 0.25, 0.3, 0.35);
     doc.drawLine(leftX, 770, rightX, 770, 1.5, 0.1, 0.1, 0.1);
@@ -370,7 +373,8 @@ export function generateAndDownloadAttendancePdf(opts: PdfReportOptions): string
 
   // Create clean filename based on gym name and dates
   const gymClean = (opts.gymName || 'Matrx_Den_640').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
-  const fileName = `${gymClean}_Attendance_Report_${opts.startDate}_to_${opts.endDate}.pdf`;
+  const catTag = opts.category === 'active' ? '_Active_Members' : '_All_Members';
+  const fileName = `${gymClean}${catTag}_Attendance_Report_${opts.startDate}_to_${opts.endDate}.pdf`;
 
   // Trigger real browser download into the user's Downloads folder
   const url = URL.createObjectURL(blob);

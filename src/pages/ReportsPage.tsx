@@ -4,7 +4,6 @@ import { db } from '../services/db';
 import { Attendance, Client, LeaderboardEntry } from '../types';
 import {
   BarChart3,
-  Printer,
   Download,
   Users,
   TrendingUp,
@@ -46,6 +45,9 @@ export const ReportsPage: React.FC = () => {
     return `${now.getFullYear()}-${month}-${day}`;
   });
   const [activePreset, setActivePreset] = useState<string>('thisMonth');
+
+  // Category filter: 'all' (all clients) vs 'active' (clients with present >= 1 in selected range)
+  const [clientCategory, setClientCategory] = useState<'all' | 'active'>('all');
 
   // Table search and sort
   const [searchQuery, setSearchQuery] = useState('');
@@ -233,6 +235,11 @@ export const ReportsPage: React.FC = () => {
     });
   }, [clients, nonSundayLogs, durationDays]);
 
+  // Active clients count (attended at least 1 day in selected range)
+  const activeClientsCount = useMemo(() => {
+    return clientStats.filter(s => s.present > 0).length;
+  }, [clientStats]);
+
   // Filtered and Sorted stats for table
   const filteredAndSortedStats = useMemo(() => {
     const rawQ = searchQuery.trim().toLowerCase();
@@ -242,6 +249,9 @@ export const ReportsPage: React.FC = () => {
 
     return clientStats
       .filter(s => {
+        // Category filter: Active requires present >= 1 in this period
+        if (clientCategory === 'active' && s.present === 0) return false;
+
         if (!rawQ) return true;
         const name = (s.client.name || '').toLowerCase();
         const mem = (s.client.membership_number ? String(s.client.membership_number) : '').toLowerCase();
@@ -277,7 +287,7 @@ export const ReportsPage: React.FC = () => {
         }
         return sortOrder === 'asc' ? diff : -diff;
       });
-  }, [clientStats, searchQuery, sortBy, sortOrder]);
+  }, [clientStats, searchQuery, sortBy, sortOrder, clientCategory]);
 
   // Top rankings
   const mostRegular = useMemo(() => {
@@ -339,17 +349,6 @@ export const ReportsPage: React.FC = () => {
 
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
-  // Print handler that ensures document.title is formatted for PDF filename
-  const handlePrint = () => {
-    const originalTitle = document.title;
-    const gymClean = (settings.gymName || 'Matrx_Den_640').trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
-    document.title = `${gymClean}_Attendance_Report_${startDate}_to_${endDate}`;
-    window.print();
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 1000);
-  };
-
   // Direct Browser PDF Download Handler (Instantly downloads .pdf file directly to Browser Downloads)
   const handleDownloadReport = () => {
     setIsDownloadingPdf(true);
@@ -366,11 +365,11 @@ export const ReportsPage: React.FC = () => {
         highestWeekday,
         lowestWeekday,
         gymDays,
+        category: clientCategory,
       });
     } catch (err) {
       console.error('Error generating PDF download:', err);
-      // Fallback: print to PDF if canvas/blob generation fails
-      handlePrint();
+      alert('Failed to generate PDF download. Please try again.');
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -410,19 +409,11 @@ export const ReportsPage: React.FC = () => {
             <button
               onClick={handleDownloadReport}
               disabled={isDownloadingPdf}
-              className="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 cursor-pointer transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4.5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 cursor-pointer transition-colors disabled:opacity-50"
               title="Download PDF report directly into your browser downloads folder"
             >
               <Download className="h-4.5 w-4.5" />
               {isDownloadingPdf ? 'Downloading PDF...' : 'Download Report PDF'}
-            </button>
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4.5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-400 cursor-pointer transition-colors"
-              title="Print or Save as PDF"
-            >
-              <Printer className="h-4.5 w-4.5" />
-              Print / Save PDF
             </button>
           </div>
         </div>
@@ -740,16 +731,51 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           {/* Top Duration & Date Range Info */}
-          <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <CalendarRange className="h-4.5 w-4.5 text-emerald-500" />
-              <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
-                From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}
-              </span>
+          <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-2">
+                <CalendarRange className="h-4.5 w-4.5 text-emerald-500" />
+                <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                  From {formatDatePretty(startDate)} to {formatDatePretty(endDate)}
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-500/20">
+                <span>Duration:</span>
+                <span className="font-extrabold">{durationDays} {durationDays === 1 ? 'Day' : 'Days'} (Excl. Sundays)</span>
+              </div>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-500/20">
-              <span>Total Duration:</span>
-              <span className="font-extrabold">{durationDays} {durationDays === 1 ? 'Day' : 'Days'} (Excl. Sundays)</span>
+
+            {/* Category Filter: All vs Active */}
+            <div className="flex items-center gap-2 self-start md:self-auto">
+              <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Category:
+              </span>
+              <div className="inline-flex p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700">
+                <button
+                  type="button"
+                  onClick={() => setClientCategory('all')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    clientCategory === 'all'
+                      ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-xs font-black'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  All ({clients.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setClientCategory('active')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    clientCategory === 'active'
+                      ? 'bg-emerald-600 text-white shadow-xs font-black'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                  }`}
+                  title="Only clients who are present for at least one day in this date range"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${clientCategory === 'active' ? 'bg-white' : 'bg-emerald-500'}`}></span>
+                  <span>Active ({activeClientsCount})</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -877,11 +903,16 @@ export const ReportsPage: React.FC = () => {
               {/* Table Controls */}
               <div className="p-4 md:p-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-extrabold text-zinc-800 dark:text-white">
-                    Client Attendance Breakdown
-                  </h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base font-extrabold text-zinc-800 dark:text-white">
+                      Client Attendance Breakdown
+                    </h2>
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                      {clientCategory === 'active' ? 'Active (Present ≥ 1d)' : 'All Members'}
+                    </span>
+                  </div>
                   <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    Showing {filteredAndSortedStats.length} clients over {durationDays} days.
+                    Showing {filteredAndSortedStats.length} {clientCategory === 'active' ? 'active ' : ''}clients over {durationDays} days.
                   </p>
                 </div>
 
